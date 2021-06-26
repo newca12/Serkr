@@ -16,19 +16,20 @@
 
 // TODO: clean this crap up
 
-use prover::data_structures::term::Term;
-use prover::data_structures::literal::Literal;
-use prover::data_structures::clause::Clause;
-use prover::unification::full_unification::mgu;
-use prover::ordering::term_ordering::TermOrdering;
-use prover::inference::maximality::literal_maximal_in;
+use crate::prover::data_structures::clause::Clause;
+use crate::prover::data_structures::literal::Literal;
+use crate::prover::data_structures::term::Term;
+use crate::prover::inference::maximality::literal_maximal_in;
+use crate::prover::ordering::term_ordering::TermOrdering;
+use crate::prover::unification::full_unification::mgu;
 
 /// Infers new clauses by equality factoring
 /// Returns the amount of inferred clauses.
-pub fn equality_factoring(term_ordering: &TermOrdering,
-                          cl: &Clause,
-                          generated: &mut Vec<Clause>)
-                          -> usize {
+pub fn equality_factoring(
+    term_ordering: &TermOrdering,
+    cl: &Clause,
+    generated: &mut Vec<Clause>,
+) -> usize {
     let mut ef_count = 0;
 
     for (i, l1) in cl.iter().enumerate() {
@@ -42,54 +43,63 @@ pub fn equality_factoring(term_ordering: &TermOrdering,
             }
 
             // So we have found two equality literals. There are four ways to try to combine them.
-            ef_count += equality_factoring_create_new(term_ordering,
-                                                      cl,
-                                                      generated,
-                                                      l1.get_lhs(),
-                                                      l1.get_rhs(),
-                                                      l2.get_lhs(),
-                                                      l2.get_rhs(),
-                                                      i);
-            ef_count += equality_factoring_create_new(term_ordering,
-                                                      cl,
-                                                      generated,
-                                                      l1.get_lhs(),
-                                                      l1.get_rhs(),
-                                                      l2.get_rhs(),
-                                                      l2.get_lhs(),
-                                                      i);
-            ef_count += equality_factoring_create_new(term_ordering,
-                                                      cl,
-                                                      generated,
-                                                      l1.get_rhs(),
-                                                      l1.get_lhs(),
-                                                      l2.get_lhs(),
-                                                      l2.get_rhs(),
-                                                      i);
-            ef_count += equality_factoring_create_new(term_ordering,
-                                                      cl,
-                                                      generated,
-                                                      l1.get_rhs(),
-                                                      l1.get_lhs(),
-                                                      l2.get_rhs(),
-                                                      l2.get_lhs(),
-                                                      i);
+            ef_count += equality_factoring_create_new(
+                term_ordering,
+                cl,
+                generated,
+                l1.get_lhs(),
+                l1.get_rhs(),
+                l2.get_lhs(),
+                l2.get_rhs(),
+                i,
+            );
+            ef_count += equality_factoring_create_new(
+                term_ordering,
+                cl,
+                generated,
+                l1.get_lhs(),
+                l1.get_rhs(),
+                l2.get_rhs(),
+                l2.get_lhs(),
+                i,
+            );
+            ef_count += equality_factoring_create_new(
+                term_ordering,
+                cl,
+                generated,
+                l1.get_rhs(),
+                l1.get_lhs(),
+                l2.get_lhs(),
+                l2.get_rhs(),
+                i,
+            );
+            ef_count += equality_factoring_create_new(
+                term_ordering,
+                cl,
+                generated,
+                l1.get_rhs(),
+                l1.get_lhs(),
+                l2.get_rhs(),
+                l2.get_lhs(),
+                i,
+            );
         }
     }
 
     ef_count
 }
 
-#[cfg_attr(feature="clippy", allow(too_many_arguments))]
-fn equality_factoring_create_new(term_ordering: &TermOrdering,
-                                 cl: &Clause,
-                                 generated: &mut Vec<Clause>,
-                                 s: &Term,
-                                 t: &Term,
-                                 u: &Term,
-                                 v: &Term,
-                                 i: usize)
-                                 -> usize {
+#[cfg_attr(feature = "clippy", allow(too_many_arguments))]
+fn equality_factoring_create_new(
+    term_ordering: &TermOrdering,
+    cl: &Clause,
+    generated: &mut Vec<Clause>,
+    s: &Term,
+    t: &Term,
+    u: &Term,
+    v: &Term,
+    i: usize,
+) -> usize {
     let mut ef_count = 0;
 
     if let Some(sigma) = mgu(s, u) {

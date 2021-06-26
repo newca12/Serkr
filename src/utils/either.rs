@@ -20,8 +20,7 @@
 #[allow(missing_docs)]
 pub enum Either<L, R> {
     Left(L),
-    Right(R)
+    Right(R),
 }
 
-impl<L, R> Either<L, R> {
-}
+impl<L, R> Either<L, R> {}

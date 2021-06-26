@@ -14,11 +14,12 @@
 // along with Serkr. If not, see <http://www.gnu.org/licenses/>.
 //
 
-use prover::data_structures::clause::Clause;
+use crate::prover::data_structures::clause::Clause;
 
 /// Checks if a clause contains a literal of the form "s = s".
 pub fn td1(cl: &Clause) -> bool {
-    cl.iter().any(|l| l.is_positive() && l.get_lhs() == l.get_rhs())
+    cl.iter()
+        .any(|l| l.is_positive() && l.get_lhs() == l.get_rhs())
 }
 
 /// Checks if a clause contains a literal and its negation.
@@ -36,9 +37,9 @@ pub fn td2(cl: &Clause) -> bool {
 #[cfg(test)]
 mod test {
     use super::{td1, td2};
-    use prover::data_structures::term::Term;
-    use prover::data_structures::literal::Literal;
-    use prover::data_structures::clause::Clause;
+    use crate::prover::data_structures::clause::Clause;
+    use crate::prover::data_structures::literal::Literal;
+    use crate::prover::data_structures::term::Term;
 
     #[test]
     fn td1_1() {

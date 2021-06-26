@@ -14,8 +14,8 @@
 // along with Serkr. If not, see <http://www.gnu.org/licenses/>.
 //
 
-use cnf::ast::{Term, Formula};
-use cnf::renaming_info::RenamingInfo;
+use crate::cnf::ast::{Formula, Term};
+use crate::cnf::renaming_info::RenamingInfo;
 
 /// Renames variables so that different occurences of quantifiers bind different variables.
 pub fn rename(f: Formula, ri: &mut RenamingInfo) -> Formula {
@@ -29,11 +29,12 @@ pub fn rename(f: Formula, ri: &mut RenamingInfo) -> Formula {
     }
 }
 
-fn rename_quantifier(id: i64,
-                     p: Formula,
-                     ri: &mut RenamingInfo,
-                     universal_quantifier: bool)
-                     -> Formula {
+fn rename_quantifier(
+    id: i64,
+    p: Formula,
+    ri: &mut RenamingInfo,
+    universal_quantifier: bool,
+) -> Formula {
     let new_id = ri.create_new_variable_id();
     let renamed_p = rename(rename_variable(p, id, new_id), ri);
 
@@ -47,35 +48,32 @@ fn rename_quantifier(id: i64,
 /// Renames all occurrences of a single variable in a formula to another variable.
 fn rename_variable(f: Formula, from: i64, to: i64) -> Formula {
     match f {
-        Formula::Predicate(id, terms) => {
-            Formula::Predicate(id,
-                               terms.into_iter()
-                                    .map(|t| rename_variable_in_term(t, from, to))
-                                    .collect())
-        }
+        Formula::Predicate(id, terms) => Formula::Predicate(
+            id,
+            terms
+                .into_iter()
+                .map(|t| rename_variable_in_term(t, from, to))
+                .collect(),
+        ),
         Formula::Not(p) => Formula::Not(Box::new(rename_variable(*p, from, to))),
-        Formula::And(l) => {
-            Formula::And(l.into_iter().map(|x| rename_variable(x, from, to)).collect())
-        }
-        Formula::Or(l) => {
-            Formula::Or(l.into_iter().map(|x| rename_variable(x, from, to)).collect())
-        }
-        Formula::Forall(id, p) => {
-            Formula::Forall(if id == from {
-                                to
-                            } else {
-                                id
-                            },
-                            Box::new(rename_variable(*p, from, to)))
-        }
-        Formula::Exists(id, p) => {
-            Formula::Exists(if id == from {
-                                to
-                            } else {
-                                id
-                            },
-                            Box::new(rename_variable(*p, from, to)))
-        }
+        Formula::And(l) => Formula::And(
+            l.into_iter()
+                .map(|x| rename_variable(x, from, to))
+                .collect(),
+        ),
+        Formula::Or(l) => Formula::Or(
+            l.into_iter()
+                .map(|x| rename_variable(x, from, to))
+                .collect(),
+        ),
+        Formula::Forall(id, p) => Formula::Forall(
+            if id == from { to } else { id },
+            Box::new(rename_variable(*p, from, to)),
+        ),
+        Formula::Exists(id, p) => Formula::Exists(
+            if id == from { to } else { id },
+            Box::new(rename_variable(*p, from, to)),
+        ),
         _ => f,
     }
 }
@@ -90,12 +88,12 @@ fn rename_variable_in_term(t: Term, from: i64, to: i64) -> Term {
                 Term::Variable(id)
             }
         }
-        Term::Function(id, args) => {
-            Term::Function(id,
-                           args.into_iter()
-                               .map(|t2| rename_variable_in_term(t2, from, to))
-                               .collect())
-        }
+        Term::Function(id, args) => Term::Function(
+            id,
+            args.into_iter()
+                .map(|t2| rename_variable_in_term(t2, from, to))
+                .collect(),
+        ),
     }
 }
 

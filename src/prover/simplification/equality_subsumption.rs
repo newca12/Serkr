@@ -14,11 +14,11 @@
 // along with Serkr. If not, see <http://www.gnu.org/licenses/>.
 //
 
-use prover::data_structures::term::Term;
-use prover::data_structures::literal::Literal;
-use prover::data_structures::clause::Clause;
-use prover::unification::matching::term_match_with_subst;
-use prover::data_structures::pd_tree::PDTree;
+use crate::prover::data_structures::clause::Clause;
+use crate::prover::data_structures::literal::Literal;
+use crate::prover::data_structures::pd_tree::PDTree;
+use crate::prover::data_structures::term::Term;
+use crate::prover::unification::matching::term_match_with_subst;
 
 /// Check if the term index contains a matching literal without taking into account symmetricity.
 fn matching_equation_exists_asymmetric(term_index: &PDTree, s: &Term, t: &Term, pos: bool) -> bool {
@@ -27,14 +27,14 @@ fn matching_equation_exists_asymmetric(term_index: &PDTree, s: &Term, t: &Term, 
             return true;
         }
     }
-    
+
     false
 }
 
 // TODO: figure out a better name
 pub fn matching_equation_exists(term_index: &PDTree, s: &Term, t: &Term, pos: bool) -> bool {
-    matching_equation_exists_asymmetric(term_index, s, t, pos) ||
-    matching_equation_exists_asymmetric(term_index, t, s, pos)
+    matching_equation_exists_asymmetric(term_index, s, t, pos)
+        || matching_equation_exists_asymmetric(term_index, t, s, pos)
 }
 
 /// Checks if we can make s = t by using some unit clause in the term index.
@@ -55,7 +55,7 @@ pub fn equation_subsumed(term_index: &PDTree, s: &Term, t: &Term) -> bool {
                 diff_index = Some(i);
             }
         }
-        
+
         if let Some(i) = diff_index {
             equation_subsumed(term_index, &s[i], &t[i])
         } else {
@@ -84,9 +84,9 @@ pub fn forward_equality_subsumed(term_index: &PDTree, cl: &Clause) -> bool {
 #[cfg(out_of_order)]
 mod test {
     use super::equality_subsumes_clause;
-    use prover::data_structures::term::Term;
-    use prover::data_structures::literal::Literal;
     use prover::data_structures::clause::Clause;
+    use prover::data_structures::literal::Literal;
+    use prover::data_structures::term::Term;
 
     #[test]
     fn equality_subsumes_clause_1() {
@@ -94,12 +94,20 @@ mod test {
         let x = Term::new_variable(-1);
         let a = Term::new_function(1, Vec::new());
         let b = Term::new_function(2, Vec::new());
-        let g_f_a_f_b = Term::new_function(4,
-                                           vec![Term::new_function(3, vec![a.clone()]),
-                                                Term::new_function(3, vec![b.clone()])]);
+        let g_f_a_f_b = Term::new_function(
+            4,
+            vec![
+                Term::new_function(3, vec![a.clone()]),
+                Term::new_function(3, vec![b.clone()]),
+            ],
+        );
         let g_a_b = Term::new_function(4, vec![a.clone(), b.clone()]);
 
-        let cl1 = Clause::new(vec![Literal::new(false, Term::new_function(3, vec![x.clone()]), x)]);
+        let cl1 = Clause::new(vec![Literal::new(
+            false,
+            Term::new_function(3, vec![x.clone()]),
+            x,
+        )]);
         let cl2 = Clause::new(vec![Literal::new(false, g_f_a_f_b, g_a_b)]);
 
         assert!(equality_subsumes_clause(&cl1, &cl2));

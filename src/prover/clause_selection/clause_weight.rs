@@ -14,8 +14,8 @@
 // along with Serkr. If not, see <http://www.gnu.org/licenses/>.
 //
 
+use crate::prover::data_structures::clause::Clause;
 use std::cmp::Ordering;
-use prover::data_structures::clause::Clause;
 
 /// Different ways to give weights to clauses.
 /// Trying to order different variants in the enum results in a panic.
@@ -35,17 +35,16 @@ impl ClauseWeight {
     pub fn new_size_weight(cl: &Clause, f_value: u64, v_value: u64) -> ClauseWeight {
         ClauseWeight::Size(cl.get_id(), cl.symbol_count(f_value, v_value))
     }
-    
+
     /// Creates a new weight based on the age of the clause.
     pub fn new_age_weight(clause: &Clause) -> ClauseWeight {
         ClauseWeight::Age(clause.get_id())
     }
-    
+
     /// Get the ID of the clause a particular clause weight is associated with.
     pub fn get_id(&self) -> u64 {
         match *self {
-            ClauseWeight::Size(id, _) |
-            ClauseWeight::Age(id) => id,
+            ClauseWeight::Size(id, _) | ClauseWeight::Age(id) => id,
         }
     }
 }
@@ -60,10 +59,11 @@ impl Ord for ClauseWeight {
     fn cmp(&self, other: &ClauseWeight) -> Ordering {
         // Since BinaryHeap is a max heap, the comparison is inverted.
         match (self, other) {
-            (&ClauseWeight::Size(_, weight1), &ClauseWeight::Size(_, weight2)) => weight2.cmp(&weight1),
+            (&ClauseWeight::Size(_, weight1), &ClauseWeight::Size(_, weight2)) => {
+                weight2.cmp(&weight1)
+            }
             (&ClauseWeight::Age(id1), &ClauseWeight::Age(id2)) => id2.cmp(&id1),
-             _ => panic!("faulty comparision")
+            _ => panic!("faulty comparision"),
         }
     }
-} 
-   
+}

@@ -14,11 +14,11 @@
 // along with Serkr. If not, see <http://www.gnu.org/licenses/>.
 //
 
+use crate::prover::data_structures::literal::Literal;
+use crate::prover::unification::substitution::Substitution;
+use std::fmt::{Debug, Error, Formatter};
 use std::ops::{Index, IndexMut};
 use std::slice::{Iter, IterMut};
-use std::fmt::{Debug, Formatter, Error};
-use prover::data_structures::literal::Literal;
-use prover::unification::substitution::Substitution;
 
 /// A multiset containing literals.
 /// Equality of clauses doesn't take into account permutations.
@@ -41,11 +41,12 @@ impl Clause {
     pub fn size(&self) -> usize {
         self.literals.len()
     }
-    
+
     /// Get the amount of positive literals in the clause.
     pub fn positive_size(&self) -> usize {
-        self.literals.iter()
-                     .fold(0, |acc, l| if l.is_positive() { 1 + acc } else { acc })
+        self.literals
+            .iter()
+            .fold(0, |acc, l| if l.is_positive() { 1 + acc } else { acc })
     }
 
     /// Checks if the clause is empty.
@@ -91,18 +92,19 @@ impl Clause {
             l.subst(substitution);
         }
     }
-    
+
     /// Calculates the symbol count with given weights to function and variable symbols.
     pub fn symbol_count(&self, f_value: u64, v_value: u64) -> u64 {
-        self.iter().fold(0, |acc, l| acc + l.symbol_count(f_value, v_value))
+        self.iter()
+            .fold(0, |acc, l| acc + l.symbol_count(f_value, v_value))
     }
-   
+
     /// Set the ID of the clause.
     /// The IDs should be unique so care must be taken.
     pub fn set_id(&mut self, new_id: u64) {
         self.id = Some(new_id);
     }
-    
+
     /// Get the ID of the clause.
     pub fn get_id(&self) -> u64 {
         self.id.expect("ID should always exist")
@@ -125,11 +127,11 @@ impl IndexMut<usize> for Clause {
 
 impl Debug for Clause {
     fn fmt(&self, formatter: &mut Formatter) -> Result<(), Error> {
-        try!(write!(formatter, "{{ "));
+        write!(formatter, "{{ ")?;
         for (i, l) in self.iter().enumerate() {
-            try!(write!(formatter, "{:?}", l));
+            write!(formatter, "{:?}", l)?;
             if i != self.size() - 1 {
-                try!(write!(formatter, ", "));
+                write!(formatter, ", ")?;
             }
         }
         write!(formatter, " }}")

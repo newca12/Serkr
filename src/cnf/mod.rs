@@ -32,12 +32,12 @@ pub mod ast_transformer;
 
 mod free_variables;
 
-mod simplify;
+mod distribute_ors_over_ands;
 mod formula_renaming;
 mod nnf;
-mod variable_renaming;
+mod simplify;
 mod standard_skolemization;
-mod distribute_ors_over_ands;
+mod variable_renaming;
 
 /// Contains the standard version of the CNF transformation algorithm.
 /// Since we use standard (not advanced) skolemization the name is like it is.

@@ -14,9 +14,9 @@
 // along with Serkr. If not, see <http://www.gnu.org/licenses/>.
 //
 
+use crate::cnf::ast::{Formula, Term};
+use crate::cnf::free_variables::free_variables;
 use std::collections::HashMap;
-use cnf::ast::{Term, Formula};
-use cnf::free_variables::free_variables;
 
 /// An enum for keeping track of the polarity of a formula.
 #[derive(PartialEq, Eq, Debug, Clone, Copy)]
@@ -62,7 +62,8 @@ impl Definition {
                 Formula::Equivalent(Box::new(self.predicate.clone()), Box::new(self.f.clone()))
             }
         };
-        vars.into_iter().fold(f, |acc, x| Formula::Forall(x, Box::new(acc)))
+        vars.into_iter()
+            .fold(f, |acc, x| Formula::Forall(x, Box::new(acc)))
     }
 }
 
@@ -135,8 +136,9 @@ impl RenamingInfo {
         match self.defs.iter().position(|x| x.f == *f) {
             Some(pos) => {
                 // Check if we need to update the polarity of the definition.
-                if self.defs[pos].polarity != Polarity::Neutral &&
-                   self.defs[pos].polarity != polarity {
+                if self.defs[pos].polarity != Polarity::Neutral
+                    && self.defs[pos].polarity != polarity
+                {
                     self.defs[pos].polarity = Polarity::Neutral;
                 }
                 Some(self.defs[pos].predicate.clone())

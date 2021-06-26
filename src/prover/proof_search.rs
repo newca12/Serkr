@@ -14,32 +14,32 @@
 // along with Serkr. If not, see <http://www.gnu.org/licenses/>.
 //
 
-use prover::flatten_cnf::flatten_cnf;
+use crate::prover::flatten_cnf::flatten_cnf;
 
-use prover::data_structures::clause::Clause;
+use crate::prover::data_structures::clause::Clause;
 
-use prover::proof_state::ProofState;
-use prover::proof_statistics::*;
+use crate::prover::proof_state::ProofState;
+use crate::prover::proof_statistics::*;
 
-use prover::simplification::literal_deletion::*;
-use prover::simplification::tautology_deletion::*;
-use prover::simplification::unit_subsumption::unit_subsumed;
-use prover::simplification::non_unit_subsumption::non_unit_subsumed;
-use prover::simplification::equality_subsumption::forward_equality_subsumed;
-use prover::simplification::rewriting::rewrite_clause;
-use prover::simplification::simplify_reflect::simplify_reflect;
+use crate::prover::simplification::equality_subsumption::forward_equality_subsumed;
+use crate::prover::simplification::literal_deletion::*;
+use crate::prover::simplification::non_unit_subsumption::non_unit_subsumed;
+use crate::prover::simplification::rewriting::rewrite_clause;
+use crate::prover::simplification::simplify_reflect::simplify_reflect;
+use crate::prover::simplification::tautology_deletion::*;
+use crate::prover::simplification::unit_subsumption::unit_subsumed;
 
-use prover::inference::equality_resolution::equality_resolution;
-use prover::inference::equality_factoring::equality_factoring;
-use prover::inference::superposition::superposition;
+use crate::prover::inference::equality_factoring::equality_factoring;
+use crate::prover::inference::equality_resolution::equality_resolution;
+use crate::prover::inference::superposition::superposition;
 
-use prover::problem_analysis::determine_term_ordering::create_term_ordering;
+use crate::prover::problem_analysis::determine_term_ordering::create_term_ordering;
 
-use utils::hash_map::HashMap;
+use crate::utils::hash_map::HashMap;
 
-use cnf::ast::Formula;
-use cnf::ast_transformer::tptp_to_cnf_ast;
-use cnf::standard_cnf::cnf;
+use crate::cnf::ast::Formula;
+use crate::cnf::ast_transformer::tptp_to_cnf_ast;
+use crate::cnf::standard_cnf::cnf;
 
 /// Rename a clause so that it contains no variables in common with any other clause.
 fn rename_clause(cl: &mut Clause, var_cnt: &mut i64) {
@@ -52,9 +52,9 @@ fn rename_clause(cl: &mut Clause, var_cnt: &mut i64) {
 
 /// Checks if a given clause is subsumed by the set of used clauses.
 fn forward_subsumed(proof_state: &ProofState, cl: &Clause) -> bool {
-    forward_equality_subsumed(proof_state.get_term_index(), cl) || 
-    unit_subsumed(proof_state.get_term_index(), cl) ||
-    non_unit_subsumed(proof_state.get_used(), cl)
+    forward_equality_subsumed(proof_state.get_term_index(), cl)
+        || unit_subsumed(proof_state.get_term_index(), cl)
+        || non_unit_subsumed(proof_state.get_used(), cl)
 }
 
 /// Checks if a clause is a syntactical tautology.
@@ -71,9 +71,11 @@ fn cheap_simplify(cl: &mut Clause) {
 
 /// A more expensive version of `cheap_simplify` with more effective rules.
 fn simplify(proof_state: &ProofState, cl: &mut Clause) {
-    rewrite_clause(proof_state.get_term_ordering(), 
-                   proof_state.get_term_index(), 
-                   cl);
+    rewrite_clause(
+        proof_state.get_term_ordering(),
+        proof_state.get_term_index(),
+        cl,
+    );
     cheap_simplify(cl);
     simplify_reflect(proof_state.get_term_index(), cl);
 }
@@ -95,11 +97,10 @@ fn handle_new_clause(proof_state: &mut ProofState, mut cl: Clause) {
 /// The main proof search loop.
 /// Note that we use the DISCOUNT version of the given clause algorithm.
 /// Also note that this function might NEVER terminate, time handling should be done elsewhere.
-fn serkr_loop(mut proof_state: ProofState,
-              mut var_cnt: i64) {
+fn serkr_loop(mut proof_state: ProofState, mut var_cnt: i64) {
     assert_eq!(proof_state.get_used_size(), 0);
     set_initial_clauses(proof_state.get_unused_size());
-    
+
     // Pick the "best" clause from the set of unused clause.
     // Every clause should eventually be picked, otherwise system is not complete.
     while let Some(mut chosen_clause) = proof_state.pick_best_clause() {
@@ -111,7 +112,7 @@ fn serkr_loop(mut proof_state: ProofState,
         // If we derived a contradiction we are done.
         if chosen_clause.is_empty() {
             refutation_was_found();
-            return; 
+            return;
         }
 
         // Check if the clause is redundant in some way. If it is no need to process it more.
@@ -128,16 +129,22 @@ fn serkr_loop(mut proof_state: ProofState,
             let mut inferred_clauses = Vec::new();
             // Now perform all inferences between our chosen clause and used clauses.
             // This includes inferences with itself.
-            let sp_count = superposition(proof_state.get_term_ordering(),
-                                         &chosen_clause,
-                                         proof_state.get_used(),
-                                         &mut inferred_clauses);
-            let ef_count = equality_factoring(proof_state.get_term_ordering(),
-                                              &chosen_clause,
-                                              &mut inferred_clauses);
-            let er_count = equality_resolution(proof_state.get_term_ordering(),
-                                               &chosen_clause,
-                                               &mut inferred_clauses);
+            let sp_count = superposition(
+                proof_state.get_term_ordering(),
+                &chosen_clause,
+                proof_state.get_used(),
+                &mut inferred_clauses,
+            );
+            let ef_count = equality_factoring(
+                proof_state.get_term_ordering(),
+                &chosen_clause,
+                &mut inferred_clauses,
+            );
+            let er_count = equality_resolution(
+                proof_state.get_term_ordering(),
+                &chosen_clause,
+                &mut inferred_clauses,
+            );
             add_superposition_inferred_count(sp_count);
             add_equality_factoring_inferred_count(ef_count);
             add_equality_resolution_inferred_count(er_count);
@@ -154,17 +161,15 @@ fn serkr_loop(mut proof_state: ProofState,
 /// First we can decide whether we want to use LPO or KBO.
 /// Then there is the option for the renaming limit for CNF translation.
 /// Note that this function might NEVER terminate, time handling should be done outside this.
-#[cfg_attr(feature="clippy", allow(single_match_else))]
-pub fn prove(s: &str,
-             use_lpo: bool,
-             renaming_limit: u64) {
+#[cfg_attr(feature = "clippy", allow(single_match_else))]
+pub fn prove(s: &str, use_lpo: bool, renaming_limit: u64) {
     reset_statistics();
     // First we obviously need to parse the file.
     let (mut axioms, conjectures, mut renaming_info) = match tptp_to_cnf_ast(s) {
         Ok(res) => res,
         Err(_) => {
             search_has_finished();
-            return; 
+            return;
         }
     };
     set_parsing_finished();
@@ -191,8 +196,7 @@ pub fn prove(s: &str,
         let flattened_cnf_f = flatten_cnf(cnf_f);
         let term_ordering = create_term_ordering(use_lpo, &flattened_cnf_f);
         let proof_state = ProofState::new(flattened_cnf_f, term_ordering);
-        serkr_loop(proof_state,
-                   renaming_info.get_newest_variable_id());
+        serkr_loop(proof_state, renaming_info.get_newest_variable_id());
     }
     search_has_finished();
 }
@@ -200,12 +204,12 @@ pub fn prove(s: &str,
 #[cfg(test)]
 mod test {
     use super::prove;
-    use prover::proof_result::ProofResult;
-    use prover::proof_statistics::get_proof_result;
-    
+    use crate::prover::proof_result::ProofResult;
+    use crate::prover::proof_statistics::get_proof_result;
+
     // Due to the use of global variables we cannot run the tests here in parallel.
     // Instead we have one gigantic test.
- 
+
     #[test]
     fn test_problem_suite() {
         // The normal pelletier problems, with some missing for various reasons.
@@ -280,7 +284,7 @@ mod test {
         pelletier_65();
         pelletier_72();
         pelletier_74();
-        
+
         // Some negated problems as well for variety.
         pelletier_1_negated();
         pelletier_8_negated();
@@ -290,7 +294,7 @@ mod test {
         pelletier_35_negated();
         pelletier_50_negated();
         pelletier_56_negated();
-        
+
         // Other problems.
         davis_putnam();
         los();
@@ -350,7 +354,6 @@ mod test {
         prove("test_problems/p8n.p", false, 32);
         assert_eq!(get_proof_result(), ProofResult::CounterSatisfiable);
     }
-
 
     fn pelletier_9() {
         prove("test_problems/p9.p", false, 32);
@@ -416,7 +419,7 @@ mod test {
         prove("test_problems/p19.p", false, 32);
         assert_eq!(get_proof_result(), ProofResult::Theorem);
     }
-    
+
     fn pelletier_20() {
         prove("test_problems/p20.p", false, 32);
         assert_eq!(get_proof_result(), ProofResult::Theorem);
@@ -501,12 +504,12 @@ mod test {
         prove("test_problems/p33.p", false, 32);
         assert_eq!(get_proof_result(), ProofResult::Theorem);
     }
-    
+
     fn pelletier_34_original() {
         prove("test_problems/p34.p", false, 32);
         assert_eq!(get_proof_result(), ProofResult::CounterSatisfiable);
     }
-    
+
     fn pelletier_34_errata() {
         prove("test_problems/p34e.p", false, 32);
         assert_eq!(get_proof_result(), ProofResult::Theorem);
@@ -671,7 +674,7 @@ mod test {
         prove("test_problems/p72.p", false, 32);
         assert_eq!(get_proof_result(), ProofResult::Unsatisfiable);
     }
-    
+
     fn pelletier_74() {
         prove("test_problems/p74.p", false, 32);
         assert_eq!(get_proof_result(), ProofResult::Unsatisfiable);
@@ -703,7 +706,11 @@ mod test {
     }
 
     fn group_left_inverse_means_right_inverse() {
-        prove("test_problems/group_left_inverse_means_right_inverse.p", false, 32);
+        prove(
+            "test_problems/group_left_inverse_means_right_inverse.p",
+            false,
+            32,
+        );
         assert_eq!(get_proof_result(), ProofResult::Theorem);
     }
 

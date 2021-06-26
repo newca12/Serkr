@@ -14,9 +14,9 @@
 // along with Serkr. If not, see <http://www.gnu.org/licenses/>.
 //
 
+use crate::prover::data_structures::term::Term;
+use crate::utils::hash_map::HashMap;
 use std::default::Default;
-use prover::data_structures::term::Term;
-use utils::hash_map::HashMap;
 
 /// Defines a partial orders on the function symbols.
 /// Different enums represent different partial orders.
@@ -74,8 +74,12 @@ fn arity_frequency_gt(frequency_table: &HashMap<i64, i64>, s: &Term, t: &Term) -
 
 /// Orders function symbols based on their rarity according to some count table.
 fn frequency_gt(frequency_table: &HashMap<i64, i64>, s: &Term, t: &Term) -> bool {
-    let s_freq = frequency_table.get(&s.get_id()).expect("Symbol not found in frequency table");
-    let t_freq = frequency_table.get(&t.get_id()).expect("Symbol not found in frequency table");
+    let s_freq = frequency_table
+        .get(&s.get_id())
+        .expect("Symbol not found in frequency table");
+    let t_freq = frequency_table
+        .get(&t.get_id())
+        .expect("Symbol not found in frequency table");
     s_freq < t_freq
 }
 
@@ -92,7 +96,7 @@ fn id_gt(s: &Term, t: &Term) -> bool {
 #[cfg(test)]
 mod test {
     use super::Precedence;
-    use prover::data_structures::term::Term;
+    use crate::prover::data_structures::term::Term;
 
     #[test]
     fn arity_id_1() {

@@ -14,10 +14,10 @@
 // along with Serkr. If not, see <http://www.gnu.org/licenses/>.
 //
 
-use cnf::ast::{Term, Formula};
-use cnf::renaming_info::RenamingInfo;
-use cnf::variable_renaming::rename;
-use cnf::free_variables::free_variables;
+use crate::cnf::ast::{Formula, Term};
+use crate::cnf::free_variables::free_variables;
+use crate::cnf::renaming_info::RenamingInfo;
+use crate::cnf::variable_renaming::rename;
 
 /// Eliminates existential quantifiers by replacing them with new skolem functions.
 /// To do this we also rename all bound variables.
@@ -48,12 +48,13 @@ fn skolemize_exists(id: i64, f: Formula, ri: &mut RenamingInfo) -> Formula {
 
 fn tsubst(f: Formula, from: i64, to: &Term) -> Formula {
     match f {
-        Formula::Predicate(id, terms) => {
-            Formula::Predicate(id,
-                               terms.into_iter()
-                                    .map(|term| tsubst_variable(term, from, to))
-                                    .collect())
-        }
+        Formula::Predicate(id, terms) => Formula::Predicate(
+            id,
+            terms
+                .into_iter()
+                .map(|term| tsubst_variable(term, from, to))
+                .collect(),
+        ),
         Formula::Not(p) => Formula::Not(Box::new(tsubst(*p, from, to))),
         Formula::And(l) => Formula::And(l.into_iter().map(|x| tsubst(x, from, to)).collect()),
         Formula::Or(l) => Formula::Or(l.into_iter().map(|x| tsubst(x, from, to)).collect()),
@@ -72,12 +73,13 @@ fn tsubst_variable(t: Term, from: i64, to: &Term) -> Term {
                 Term::Variable(id)
             }
         }
-        Term::Function(id, subterms) => {
-            Term::Function(id,
-                           subterms.into_iter()
-                                   .map(|term| tsubst_variable(term, from, to))
-                                   .collect())
-        }
+        Term::Function(id, subterms) => Term::Function(
+            id,
+            subterms
+                .into_iter()
+                .map(|term| tsubst_variable(term, from, to))
+                .collect(),
+        ),
     }
 }
 

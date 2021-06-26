@@ -14,26 +14,27 @@
 // along with Serkr. If not, see <http://www.gnu.org/licenses/>.
 //
 
-use prover::data_structures::clause::Clause;
-use prover::unification::full_unification::mgu;
-use prover::ordering::term_ordering::TermOrdering;
-use prover::inference::maximality::literal_maximal_in;
+use crate::prover::data_structures::clause::Clause;
+use crate::prover::inference::maximality::literal_maximal_in;
+use crate::prover::ordering::term_ordering::TermOrdering;
+use crate::prover::unification::full_unification::mgu;
 
 /// Infers new clauses by (ordered) equality resolution.
 /// Returns the amount of inferred clauses.
-pub fn equality_resolution(term_ordering: &TermOrdering,
-                           cl: &Clause,
-                           generated: &mut Vec<Clause>)
-                           -> usize {
+pub fn equality_resolution(
+    term_ordering: &TermOrdering,
+    cl: &Clause,
+    generated: &mut Vec<Clause>,
+) -> usize {
     let mut er_count = 0;
 
     for (i, l) in cl.iter().enumerate() {
         if l.is_negative() {
-            if let Some(sigma) = mgu(l.get_lhs(), l.get_rhs()) {          
+            if let Some(sigma) = mgu(l.get_lhs(), l.get_rhs()) {
                 let mut new_cl = cl.clone();
                 new_cl.subst(&sigma);
                 let new_l = new_cl.swap_remove(i);
-                
+
                 assert_eq!(new_l.get_lhs(), new_l.get_rhs());
                 assert_eq!(new_cl.size() + 1, cl.size());
 

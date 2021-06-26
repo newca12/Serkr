@@ -14,10 +14,12 @@
 // along with Serkr. If not, see <http://www.gnu.org/licenses/>.
 //
 
-use prover::data_structures::literal::Literal;
-use prover::data_structures::clause::Clause;
-use prover::simplification::equality_subsumption::{matching_equation_exists, equation_subsumed};
-use prover::data_structures::pd_tree::PDTree;
+use crate::prover::data_structures::clause::Clause;
+use crate::prover::data_structures::literal::Literal;
+use crate::prover::data_structures::pd_tree::PDTree;
+use crate::prover::simplification::equality_subsumption::{
+    equation_subsumed, matching_equation_exists,
+};
 
 /// Simplifies a given clause by positive and negative simplify-reflect.
 pub fn simplify_reflect(term_index: &PDTree, cl: &mut Clause) {
@@ -34,7 +36,7 @@ pub fn simplify_reflect(term_index: &PDTree, cl: &mut Clause) {
 }
 
 fn simplifiable(term_index: &PDTree, l: &Literal) -> bool {
-    if l.is_positive(){
+    if l.is_positive() {
         matching_equation_exists(term_index, l.get_lhs(), l.get_rhs(), false)
     } else {
         equation_subsumed(term_index, l.get_lhs(), l.get_rhs())

@@ -14,8 +14,8 @@
 // along with Serkr. If not, see <http://www.gnu.org/licenses/>.
 //
 
-use prover::data_structures::term::Term;
-use prover::ordering::precedence::Precedence;
+use crate::prover::data_structures::term::Term;
+use crate::prover::ordering::precedence::Precedence;
 
 /// Checks if s is greater than t according to the ordering.
 pub fn lpo_gt(precedence: &Precedence, s: &Term, t: &Term) -> bool {
@@ -60,9 +60,9 @@ fn lexical_ordering(precedence: &Precedence, s: &Term, t: &Term) -> bool {
 
 #[cfg(test)]
 mod test {
-    use super::{lpo_gt, lpo_ge};
-    use prover::data_structures::term::Term;
-    use prover::ordering::precedence::Precedence;
+    use super::{lpo_ge, lpo_gt};
+    use crate::prover::data_structures::term::Term;
+    use crate::prover::ordering::precedence::Precedence;
 
     #[test]
     fn lpo_gt_1() {

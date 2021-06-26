@@ -14,28 +14,28 @@
 // along with Serkr. If not, see <http://www.gnu.org/licenses/>.
 //
 
-// This entire file is a dirty fucking hack. 
+// This entire file is a dirty fucking hack.
 // We now have global state, so we can NEVER have several proof searches running concurrently.
 // Notably, proof search tests have to be clustered.
 // I haven't figured out a better way to get the statistics out in case the search thread gets stuck.
 
-use std::sync::atomic::{AtomicUsize, AtomicBool, Ordering, ATOMIC_USIZE_INIT, ATOMIC_BOOL_INIT};
-use prover::proof_result::ProofResult;
+use crate::prover::proof_result::ProofResult;
+use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 
-static INITIAL_CLAUSES: AtomicUsize = ATOMIC_USIZE_INIT;
-static ITERATIONS: AtomicUsize = ATOMIC_USIZE_INIT;
-static TRIVIAL_COUNT: AtomicUsize = ATOMIC_USIZE_INIT;
-static FS_COUNT: AtomicUsize = ATOMIC_USIZE_INIT;
-static BS_COUNT: AtomicUsize = ATOMIC_USIZE_INIT;
-static SP_COUNT: AtomicUsize = ATOMIC_USIZE_INIT;
-static EF_COUNT: AtomicUsize = ATOMIC_USIZE_INIT;
-static ER_COUNT: AtomicUsize = ATOMIC_USIZE_INIT;
-static TRIVIAL_INFERENCE_COUNT: AtomicUsize = ATOMIC_USIZE_INIT;
+static INITIAL_CLAUSES: AtomicUsize = AtomicUsize::new(0);
+static ITERATIONS: AtomicUsize = AtomicUsize::new(0);
+static TRIVIAL_COUNT: AtomicUsize = AtomicUsize::new(0);
+static FS_COUNT: AtomicUsize = AtomicUsize::new(0);
+static BS_COUNT: AtomicUsize = AtomicUsize::new(0);
+static SP_COUNT: AtomicUsize = AtomicUsize::new(0);
+static EF_COUNT: AtomicUsize = AtomicUsize::new(0);
+static ER_COUNT: AtomicUsize = AtomicUsize::new(0);
+static TRIVIAL_INFERENCE_COUNT: AtomicUsize = AtomicUsize::new(0);
 
-static CONTAINS_CONJECTURES: AtomicBool = ATOMIC_BOOL_INIT;
-static PARSING_FINISHED: AtomicBool = ATOMIC_BOOL_INIT;
-static SEARCH_FINISHED: AtomicBool = ATOMIC_BOOL_INIT;
-static REFUTATION_FOUND: AtomicBool = ATOMIC_BOOL_INIT;
+static CONTAINS_CONJECTURES: AtomicBool = AtomicBool::new(false);
+static PARSING_FINISHED: AtomicBool = AtomicBool::new(false);
+static SEARCH_FINISHED: AtomicBool = AtomicBool::new(false);
+static REFUTATION_FOUND: AtomicBool = AtomicBool::new(false);
 
 /// Resets all the statistics.
 pub fn reset_statistics() {
@@ -48,7 +48,7 @@ pub fn reset_statistics() {
     EF_COUNT.store(0, Ordering::SeqCst);
     ER_COUNT.store(0, Ordering::SeqCst);
     TRIVIAL_INFERENCE_COUNT.store(0, Ordering::SeqCst);
-    
+
     CONTAINS_CONJECTURES.store(false, Ordering::SeqCst);
     PARSING_FINISHED.store(false, Ordering::SeqCst);
     SEARCH_FINISHED.store(false, Ordering::SeqCst);
@@ -192,9 +192,9 @@ pub fn get_nonredundant_analyzed_count() -> usize {
 
 /// Get the amount of inferred clauses.
 pub fn get_inferred_count() -> usize {
-    get_superposition_inferred_count() + 
-    get_equality_factoring_inferred_count() + 
-    get_equality_resolution_inferred_count()
+    get_superposition_inferred_count()
+        + get_equality_factoring_inferred_count()
+        + get_equality_resolution_inferred_count()
 }
 
 /// Get the amount of nontrivial inferred clauses.

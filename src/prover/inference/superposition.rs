@@ -16,12 +16,12 @@
 
 // TODO: clean this crap up.
 
-use prover::data_structures::term::Term;
-use prover::data_structures::literal::Literal;
-use prover::data_structures::clause::Clause;
-use prover::unification::full_unification::mgu;
-use prover::ordering::term_ordering::TermOrdering;
-use prover::inference::maximality::{literal_maximal_in, literal_strictly_maximal_in};
+use crate::prover::data_structures::clause::Clause;
+use crate::prover::data_structures::literal::Literal;
+use crate::prover::data_structures::term::Term;
+use crate::prover::inference::maximality::{literal_maximal_in, literal_strictly_maximal_in};
+use crate::prover::ordering::term_ordering::TermOrdering;
+use crate::prover::unification::full_unification::mgu;
 
 fn create_overlapped_term(u: &Term, t: &Term, trace: &[usize]) -> Term {
     let mut new_term = u.clone();
@@ -39,21 +39,22 @@ fn create_overlapped_term0(u_p: &mut Term, t: &Term, trace: &[usize], n: usize) 
 }
 
 /// TODO: I really, REALLY should document and clean this up.
-#[cfg_attr(feature="clippy", allow(too_many_arguments))]
-fn overlaps(term_ordering: &TermOrdering,
-            s: &Term,
-            t: &Term,
-            u: &Term,
-            v: &Term,
-            u_v_negated: bool,
-            u_p: &Term,
-            cl1: &Clause,
-            cl1_i: usize,
-            cl2: &Clause,
-            cl2_i: usize,
-            trace: &mut Vec<usize>,
-            generated: &mut Vec<Clause>)
-            -> usize {
+#[cfg_attr(feature = "clippy", allow(too_many_arguments))]
+fn overlaps(
+    term_ordering: &TermOrdering,
+    s: &Term,
+    t: &Term,
+    u: &Term,
+    v: &Term,
+    u_v_negated: bool,
+    u_p: &Term,
+    cl1: &Clause,
+    cl1_i: usize,
+    cl2: &Clause,
+    cl2_i: usize,
+    trace: &mut Vec<usize>,
+    generated: &mut Vec<Clause>,
+) -> usize {
     let mut sp_count = 0;
 
     if !u_p.is_variable() {
@@ -96,19 +97,21 @@ fn overlaps(term_ordering: &TermOrdering,
 
         for (i, x) in u_p.iter().enumerate() {
             trace.push(i);
-            sp_count += overlaps(term_ordering,
-                                 s,
-                                 t,
-                                 u,
-                                 v,
-                                 u_v_negated,
-                                 x,
-                                 cl1,
-                                 cl1_i,
-                                 cl2,
-                                 cl2_i,
-                                 trace,
-                                 generated);
+            sp_count += overlaps(
+                term_ordering,
+                s,
+                t,
+                u,
+                v,
+                u_v_negated,
+                x,
+                cl1,
+                cl1_i,
+                cl2,
+                cl2_i,
+                trace,
+                generated,
+            );
             trace.pop();
         }
     }
@@ -116,13 +119,14 @@ fn overlaps(term_ordering: &TermOrdering,
     sp_count
 }
 
-fn overlaps_literal(term_ordering: &TermOrdering,
-                    cl1: &Clause,
-                    cl1_i: usize,
-                    cl2: &Clause,
-                    cl2_i: usize,
-                    generated: &mut Vec<Clause>)
-                    -> usize {
+fn overlaps_literal(
+    term_ordering: &TermOrdering,
+    cl1: &Clause,
+    cl1_i: usize,
+    cl2: &Clause,
+    cl2_i: usize,
+    generated: &mut Vec<Clause>,
+) -> usize {
     let mut trace = Vec::new();
     let l_lhs = cl1[cl1_i].get_lhs();
     let l_rhs = cl1[cl1_i].get_rhs();
@@ -132,69 +136,78 @@ fn overlaps_literal(term_ordering: &TermOrdering,
     let mut sp_count = 0;
 
     // Four different ways to arrange two equations
-    sp_count += overlaps(term_ordering,
-                         l_lhs,
-                         l_rhs,
-                         r_lhs,
-                         r_rhs,
-                         r_negated,
-                         r_lhs,
-                         cl1,
-                         cl1_i,
-                         cl2,
-                         cl2_i,
-                         &mut trace,
-                         generated);
-    sp_count += overlaps(term_ordering,
-                         l_rhs,
-                         l_lhs,
-                         r_lhs,
-                         r_rhs,
-                         r_negated,
-                         r_lhs,
-                         cl1,
-                         cl1_i,
-                         cl2,
-                         cl2_i,
-                         &mut trace,
-                         generated);
-    sp_count += overlaps(term_ordering,
-                         l_lhs,
-                         l_rhs,
-                         r_rhs,
-                         r_lhs,
-                         r_negated,
-                         r_rhs,
-                         cl1,
-                         cl1_i,
-                         cl2,
-                         cl2_i,
-                         &mut trace,
-                         generated);
-    sp_count += overlaps(term_ordering,
-                         l_rhs,
-                         l_lhs,
-                         r_rhs,
-                         r_lhs,
-                         r_negated,
-                         r_rhs,
-                         cl1,
-                         cl1_i,
-                         cl2,
-                         cl2_i,
-                         &mut trace,
-                         generated);
+    sp_count += overlaps(
+        term_ordering,
+        l_lhs,
+        l_rhs,
+        r_lhs,
+        r_rhs,
+        r_negated,
+        r_lhs,
+        cl1,
+        cl1_i,
+        cl2,
+        cl2_i,
+        &mut trace,
+        generated,
+    );
+    sp_count += overlaps(
+        term_ordering,
+        l_rhs,
+        l_lhs,
+        r_lhs,
+        r_rhs,
+        r_negated,
+        r_lhs,
+        cl1,
+        cl1_i,
+        cl2,
+        cl2_i,
+        &mut trace,
+        generated,
+    );
+    sp_count += overlaps(
+        term_ordering,
+        l_lhs,
+        l_rhs,
+        r_rhs,
+        r_lhs,
+        r_negated,
+        r_rhs,
+        cl1,
+        cl1_i,
+        cl2,
+        cl2_i,
+        &mut trace,
+        generated,
+    );
+    sp_count += overlaps(
+        term_ordering,
+        l_rhs,
+        l_lhs,
+        r_rhs,
+        r_lhs,
+        r_negated,
+        r_rhs,
+        cl1,
+        cl1_i,
+        cl2,
+        cl2_i,
+        &mut trace,
+        generated,
+    );
 
     sp_count
 }
 
 /// Generates superposition inferences between two clauses, in one direction.
 /// Returns the amount of generated clauses.
-fn superposition_generate(term_ordering: &TermOrdering,
-                          cl1: &Clause,
-                          cl2: &Clause,
-                          generated: &mut Vec<Clause>)
-                          -> usize {
+fn superposition_generate(
+    term_ordering: &TermOrdering,
+    cl1: &Clause,
+    cl2: &Clause,
+    generated: &mut Vec<Clause>,
+) -> usize {
     let mut sp_count = 0;
 
     for (i, l1) in cl1.iter().enumerate() {
@@ -212,11 +225,12 @@ fn superposition_generate(term_ordering: &TermOrdering,
 /// Time complexity is who the fuck knows.
 /// Assumes that cl was renamed so that it has no variables in common with any other clause.
 /// Returns the amount of clauses generated.
-pub fn superposition(term_ordering: &TermOrdering,
-                     cl: &Clause,
-                     clauses: &[Clause],
-                     generated: &mut Vec<Clause>)
-                     -> usize {
+pub fn superposition(
+    term_ordering: &TermOrdering,
+    cl: &Clause,
+    clauses: &[Clause],
+    generated: &mut Vec<Clause>,
+) -> usize {
     let mut sp_count = 0;
 
     for cl2 in clauses {

@@ -14,42 +14,40 @@
 // along with Serkr. If not, see <http://www.gnu.org/licenses/>.
 //
 
-use cnf::ast::Formula;
+use crate::cnf::ast::Formula;
 
 /// Distributes ORs inwards over ANDs.
 pub fn distribute_ors_over_ands(f: Formula) -> Formula {
     match f {
-        Formula::And(l) => {
-            Formula::And(l.into_iter()
-                          .map(distribute_ors_over_ands)
-                          .collect())
-        }
+        Formula::And(l) => Formula::And(l.into_iter().map(distribute_ors_over_ands).collect()),
         Formula::Or(l) => distribute_or(l),
         _ => f,
     }
 }
 
 fn distribute_or(l: Vec<Formula>) -> Formula {
-    let mut distributed_l = l.into_iter()
-                             .map(distribute_ors_over_ands)
-                             .collect::<Vec<_>>();
+    let mut distributed_l = l
+        .into_iter()
+        .map(distribute_ors_over_ands)
+        .collect::<Vec<_>>();
 
-    if let Some(i) = distributed_l.iter().position(|x| {
-        match *x {
-            Formula::And(_) => true,
-            _ => false,
-        }
+    if let Some(i) = distributed_l.iter().position(|x| match *x {
+        Formula::And(_) => true,
+        _ => false,
     }) {
         let and_f = distributed_l.swap_remove(i);
         if let Formula::And(and_l) = and_f {
-            Formula::And(and_l.into_iter()
-                              .map(|x| {
-                                  let mut rest = distributed_l.clone();
-                                  rest.push(x);
-                                  Formula::Or(rest)
-                              })
-                              .map(distribute_ors_over_ands)
-                              .collect())
+            Formula::And(
+                and_l
+                    .into_iter()
+                    .map(|x| {
+                        let mut rest = distributed_l.clone();
+                        rest.push(x);
+                        Formula::Or(rest)
+                    })
+                    .map(distribute_ors_over_ands)
+                    .collect(),
+            )
         } else {
             panic!("Should not be possible, see above if condition");
         }

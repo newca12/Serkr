@@ -14,8 +14,8 @@
 // along with Serkr. If not, see <http://www.gnu.org/licenses/>.
 //
 
+use crate::cnf::ast::{Formula, Term};
 use std::collections::hash_set::HashSet;
-use cnf::ast::{Term, Formula};
 
 /// Used for checking if a term t is free in a formula f.
 pub fn free_in(f: &Formula, t: &Term) -> bool {
@@ -35,11 +35,11 @@ pub fn free_in(f: &Formula, t: &Term) -> bool {
 
 /// Used for checking if a term s occurs in a term t.
 fn occurs_in(t: &Term, s: &Term) -> bool {
-    t == s ||
-    match *t {
-        Term::Variable(_) => false,
-        Term::Function(_, ref args) => args.iter().any(|x| occurs_in(x, s)),
-    }
+    t == s
+        || match *t {
+            Term::Variable(_) => false,
+            Term::Function(_, ref args) => args.iter().any(|x| occurs_in(x, s)),
+        }
 }
 
 /// Get the free variables of a formula.
@@ -93,7 +93,7 @@ fn fvt(t: &Term, vars: &mut HashSet<i64>) {
 #[cfg(test)]
 mod test {
     use super::{free_in, free_variables};
-    use cnf::ast::{Term, Formula};
+    use crate::cnf::ast::{Formula, Term};
 
     #[test]
     fn free_in_1() {
@@ -105,11 +105,13 @@ mod test {
         let p_y_z = Formula::Predicate(1, vec![y.clone(), z.clone()]);
         let p_x_z = Formula::Predicate(1, vec![x.clone(), z.clone()]);
         let f_q = Formula::Implies(Box::new(Formula::And(vec![p_x_y, p_y_z])), Box::new(p_x_z));
-        let f =
-            Formula::Forall(-1,
-                            Box::new(Formula::Forall(-2,
-                                                     Box::new(Formula::Forall(-3,
-                                                                              Box::new(f_q))))));
+        let f = Formula::Forall(
+            -1,
+            Box::new(Formula::Forall(
+                -2,
+                Box::new(Formula::Forall(-3, Box::new(f_q))),
+            )),
+        );
 
         assert!(!free_in(&f, &x));
         assert!(!free_in(&f, &y));

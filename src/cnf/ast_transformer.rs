@@ -14,26 +14,29 @@
 // along with Serkr. If not, see <http://www.gnu.org/licenses/>.
 //
 
-use tptp_parser::parser::parse_tptp_file;
-use tptp_parser::ast::AnnotatedFormula;
-use tptp_parser::ast::Term as ParserTerm;
-use tptp_parser::ast::Formula as ParserFormula;
-use cnf::ast::Term as CnfTerm;
-use cnf::ast::Formula as CnfFormula;
-use cnf::renaming_info::RenamingInfo;
+use crate::cnf::ast::Formula as CnfFormula;
+use crate::cnf::ast::Term as CnfTerm;
+use crate::cnf::renaming_info::RenamingInfo;
+use crate::tptp_parser::ast::AnnotatedFormula;
+use crate::tptp_parser::ast::Formula as ParserFormula;
+use crate::tptp_parser::ast::Term as ParserTerm;
+use crate::tptp_parser::parser::parse_tptp_file;
 
 /// Parses the file at the location given by the string into a CNF AST, if possible.
 /// More specifically, the CNF AST is in two parts: axioms and conjectures.
 /// Either one might be empty but not both.
-pub fn tptp_to_cnf_ast(s: &str) -> Result<(Vec<CnfFormula>, Vec<CnfFormula>, RenamingInfo), String> {
-    Ok(try!(tptp_ast_to_cnf_ast(try!(parse_tptp_file(s)))))
+pub fn tptp_to_cnf_ast(
+    s: &str,
+) -> Result<(Vec<CnfFormula>, Vec<CnfFormula>, RenamingInfo), String> {
+    Ok(tptp_ast_to_cnf_ast(parse_tptp_file(s)?)?)
 }
 
 /// Transforms the AST format of the TPTP parser into the AST format of the CNF transformer.
 /// The first and second elements of the tuple are the axioms and conjectures of the problem.
 /// Either one might be empty, but not both.
-fn tptp_ast_to_cnf_ast(f_list: Vec<AnnotatedFormula>)
-                       -> Result<(Vec<CnfFormula>, Vec<CnfFormula>, RenamingInfo), String> {
+fn tptp_ast_to_cnf_ast(
+    f_list: Vec<AnnotatedFormula>,
+) -> Result<(Vec<CnfFormula>, Vec<CnfFormula>, RenamingInfo), String> {
     // Check if any of the formula roles is incorrect.
     // Also, we hit the if let borrow bug again.
     if let Some(f) = f_list.iter().find(|&f| !formula_role_valid(f)) {
@@ -44,25 +47,29 @@ fn tptp_ast_to_cnf_ast(f_list: Vec<AnnotatedFormula>)
     }
 
     // Check that we don't have both conjectures and negated conjectures in a problem.
-    let contains_negated_conj = f_list.iter().any(|x| get_formula_role(x) == "negated_conjecture");
+    let contains_negated_conj = f_list
+        .iter()
+        .any(|x| get_formula_role(x) == "negated_conjecture");
     let contains_conj = f_list.iter().any(|x| get_formula_role(x) == "conjecture");
     if contains_negated_conj && contains_conj {
         return Err("A problem shouldn't have both negated_conjectures and conjectures".to_owned());
     }
 
     let mut renaming_info = RenamingInfo::new();
-    let (conj_annotated, other_annotated): (Vec<_>, Vec<_>) = f_list.into_iter().partition(|x| {
-        get_formula_role(x) == "conjecture"
-    });
+    let (conj_annotated, other_annotated): (Vec<_>, Vec<_>) = f_list
+        .into_iter()
+        .partition(|x| get_formula_role(x) == "conjecture");
 
-    let conj = conj_annotated.into_iter()
-                             .map(strip_annotations)
-                             .map(|x| transform_ast(x, &mut renaming_info))
-                             .collect::<Vec<_>>();
-    let other = other_annotated.into_iter()
-                               .map(strip_annotations)
-                               .map(|x| transform_ast(x, &mut renaming_info))
-                               .collect::<Vec<_>>();
+    let conj = conj_annotated
+        .into_iter()
+        .map(strip_annotations)
+        .map(|x| transform_ast(x, &mut renaming_info))
+        .collect::<Vec<_>>();
+    let other = other_annotated
+        .into_iter()
+        .map(strip_annotations)
+        .map(|x| transform_ast(x, &mut renaming_info))
+        .collect::<Vec<_>>();
 
     assert!(conj.len() > 0 || other.len() > 0);
     Ok((other, conj, renaming_info))
@@ -70,18 +77,22 @@ fn tptp_ast_to_cnf_ast(f_list: Vec<AnnotatedFormula>)
 
 /// Returns an error string for a faulty CNF formula role.
 fn cnf_formula_role_error(f: &AnnotatedFormula) -> String {
-    format!("Formula role was expected to be one of \
+    format!(
+        "Formula role was expected to be one of \
              'axiom|hypothesis|definition|assumption|lemma|theorem|negated_conjecture' instead of \
              {}",
-            get_formula_role(f))
+        get_formula_role(f)
+    )
 }
 
 /// Returns an error string for a faulty FOF formula role.
 fn fof_formula_role_error(f: &AnnotatedFormula) -> String {
-    format!("Formula role was expected to be one of \
+    format!(
+        "Formula role was expected to be one of \
              'axiom|hypothesis|definition|assumption|lemma|theorem|negated_conjecture|conjecture' \
              instead of {}",
-            get_formula_role(f))
+        get_formula_role(f)
+    )
 }
 
 /// Strips all annotations from a single annotated formula.
@@ -108,8 +119,13 @@ fn formula_role_valid(f: &AnnotatedFormula) -> bool {
 
 /// Returns true if the formula role for a CNF formula is valid.
 fn formula_role_valid_cnf(s: &str) -> bool {
-    s == "axiom" || s == "hypothesis" || s == "definition" || s == "assumption" ||
-    s == "lemma" || s == "theorem" || s == "negated_conjecture"
+    s == "axiom"
+        || s == "hypothesis"
+        || s == "definition"
+        || s == "assumption"
+        || s == "lemma"
+        || s == "theorem"
+        || s == "negated_conjecture"
 }
 
 /// Returns true if the formula role for a FOF formula is valid.
@@ -123,14 +139,14 @@ fn transform_ast(f: ParserFormula, ri: &mut RenamingInfo) -> CnfFormula {
         ParserFormula::Not(p) => CnfFormula::Not(Box::new(transform_ast(*p, ri))),
         ParserFormula::And(p, q) => transform_and(*p, *q, ri),
         ParserFormula::Or(p, q) => transform_or(*p, *q, ri),
-        ParserFormula::Implies(p, q) => {
-            CnfFormula::Implies(Box::new(transform_ast(*p, ri)),
-                                Box::new(transform_ast(*q, ri)))
-        }
-        ParserFormula::Equivalent(p, q) => {
-            CnfFormula::Equivalent(Box::new(transform_ast(*p, ri)),
-                                   Box::new(transform_ast(*q, ri)))
-        }
+        ParserFormula::Implies(p, q) => CnfFormula::Implies(
+            Box::new(transform_ast(*p, ri)),
+            Box::new(transform_ast(*q, ri)),
+        ),
+        ParserFormula::Equivalent(p, q) => CnfFormula::Equivalent(
+            Box::new(transform_ast(*p, ri)),
+            Box::new(transform_ast(*q, ri)),
+        ),
         ParserFormula::Forall(s, p) => transform_quantifier(s, *p, ri, true),
         ParserFormula::Exists(s, p) => transform_quantifier(s, *p, ri, false),
     }
@@ -180,8 +196,10 @@ fn transform_literal(s: String, args: Vec<ParserTerm>, ri: &mut RenamingInfo) ->
         CnfFormula::False
     } else {
         let id = ri.get_function_id(s, args.len(), true);
-        CnfFormula::Predicate(id,
-                              args.into_iter().map(|t| transform_term(t, ri)).collect())
+        CnfFormula::Predicate(
+            id,
+            args.into_iter().map(|t| transform_term(t, ri)).collect(),
+        )
     }
 }
 
@@ -190,16 +208,19 @@ fn transform_term(t: ParserTerm, ri: &mut RenamingInfo) -> CnfTerm {
         ParserTerm::Variable(s) => CnfTerm::Variable(ri.get_variable_id(s)),
         ParserTerm::Function(s, args) => {
             let id = ri.get_function_id(s, args.len(), false);
-            CnfTerm::Function(id,
-                              args.into_iter().map(|t| transform_term(t, ri)).collect())
+            CnfTerm::Function(
+                id,
+                args.into_iter().map(|t| transform_term(t, ri)).collect(),
+            )
         }
     }
 }
-fn transform_quantifier(s: String,
-                        p: ParserFormula,
-                        ri: &mut RenamingInfo,
-                        forall_quantifier: bool)
-                        -> CnfFormula {
+fn transform_quantifier(
+    s: String,
+    p: ParserFormula,
+    ri: &mut RenamingInfo,
+    forall_quantifier: bool,
+) -> CnfFormula {
     let id = ri.get_variable_id(s);
     let new_p = Box::new(transform_ast(p, ri));
 

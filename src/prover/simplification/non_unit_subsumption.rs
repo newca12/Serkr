@@ -14,33 +14,41 @@
 // along with Serkr. If not, see <http://www.gnu.org/licenses/>.
 //
 
-use prover::data_structures::literal::Literal;
-use prover::data_structures::clause::Clause;
-use prover::data_structures::term::Term;
-use prover::unification::matching::term_match_general;
-use prover::unification::substitution::Substitution;
-use utils::hash_map::HashMap;
+use crate::prover::data_structures::clause::Clause;
+use crate::prover::data_structures::literal::Literal;
+use crate::prover::data_structures::term::Term;
+use crate::prover::unification::matching::term_match_general;
+use crate::prover::unification::substitution::Substitution;
+use crate::utils::hash_map::HashMap;
 
-fn match_literals(substitution: Substitution,
-                  p: &Literal,
-                  q: &Literal,
-                  mixed: bool)
-                  -> Option<Substitution> {
+fn match_literals(
+    substitution: Substitution,
+    p: &Literal,
+    q: &Literal,
+    mixed: bool,
+) -> Option<Substitution> {
     let eqs = if mixed {
-        vec![(p.get_rhs().clone(), q.get_lhs().clone()), (p.get_lhs().clone(), q.get_rhs().clone())]
+        vec![
+            (p.get_rhs().clone(), q.get_lhs().clone()),
+            (p.get_lhs().clone(), q.get_rhs().clone()),
+        ]
     } else {
-        vec![(p.get_lhs().clone(), q.get_lhs().clone()), (p.get_rhs().clone(), q.get_rhs().clone())]
+        vec![
+            (p.get_lhs().clone(), q.get_lhs().clone()),
+            (p.get_rhs().clone(), q.get_rhs().clone()),
+        ]
     };
     term_match_general(substitution, eqs)
 }
 
-#[cfg_attr(feature="clippy", allow(needless_pass_by_value))]
-fn subsumes_clause(substitution: Substitution,
-                   exclusion: &mut Vec<bool>,
-                   cl1: &Clause,
-                   cl2: &Clause,
-                   n: usize)
-                   -> bool {
+#[cfg_attr(feature = "clippy", allow(needless_pass_by_value))]
+fn subsumes_clause(
+    substitution: Substitution,
+    exclusion: &mut Vec<bool>,
+    cl1: &Clause,
+    cl2: &Clause,
+    n: usize,
+) -> bool {
     if n >= cl1.size() {
         true
     } else {
@@ -84,26 +92,26 @@ fn fulfills_preconditions(cl1: &Clause, cl2: &Clause) -> bool {
     // Obviously cl1 cannot have more literals than cl2.
     if cl1.size() > cl2.size() {
         return false;
-    } 
-    
+    }
+
     let cl1_pos_size = cl1.positive_size();
     let cl2_pos_size = cl2.positive_size();
-    
+
     // Similarly for positive literals.
     if cl1_pos_size > cl2_pos_size {
         return false;
     }
-    
+
     // Similarly for negative literals.
     if cl1.size() - cl1_pos_size > cl2.size() - cl2_pos_size {
         return false;
     }
-    
+
     // Also cl1 cannot have more function symbols than cl2.
     if cl1.symbol_count(1, 0) > cl2.symbol_count(1, 0) {
         return false;
     }
-    
+
     not_more_function_symbols(cl1, cl2, true) && not_more_function_symbols(cl1, cl2, false)
 }
 
@@ -116,7 +124,12 @@ fn not_more_function_symbols(cl1: &Clause, cl2: &Clause, pos_lit: bool) -> bool 
 }
 
 /// Helper function for updating.
-fn update_function_symbol_count(counts: &mut HashMap<i64, i64>, cl: &Clause, weight: i64, pos_lit: bool) {
+fn update_function_symbol_count(
+    counts: &mut HashMap<i64, i64>,
+    cl: &Clause,
+    weight: i64,
+    pos_lit: bool,
+) {
     for l in cl.iter() {
         if l.is_positive() == pos_lit {
             update_function_symbol_count_in_term(counts, l.get_lhs(), weight);
@@ -133,7 +146,7 @@ fn update_function_symbol_count_in_term(counts: &mut HashMap<i64, i64>, t: &Term
             let v = counts.entry(t.get_id()).or_insert(0);
             *v += weight;
         }
-        
+
         for x in t.iter() {
             update_function_symbol_count_in_term(counts, x, weight);
         }
@@ -160,9 +173,9 @@ pub fn non_unit_subsumed(active: &[Clause], cl: &Clause) -> bool {
 #[cfg(out_of_order)]
 mod test {
     use super::subsumed;
-    use prover::data_structures::term::Term;
-    use prover::data_structures::literal::Literal;
     use prover::data_structures::clause::Clause;
+    use prover::data_structures::literal::Literal;
+    use prover::data_structures::term::Term;
 
     #[test]
     fn subsumes_clause_1() {
@@ -217,15 +230,21 @@ mod test {
     fn subsumes_clause_4() {
         let x1 = Term::new_variable(-1);
         let x2 = Term::new_variable(-2);
-        let cl_l1 = Literal::new(false,
-                                 Term::new_function(1, vec![x1.clone()]),
-                                 Term::new_truth());
-        let cl1_l2 = Literal::new(true,
-                                  Term::new_special_function(2, vec![x1]),
-                                  Term::new_truth());
-        let cl2_l2 = Literal::new(true,
-                                  Term::new_special_function(2, vec![x2]),
-                                  Term::new_truth());
+        let cl_l1 = Literal::new(
+            false,
+            Term::new_function(1, vec![x1.clone()]),
+            Term::new_truth(),
+        );
+        let cl1_l2 = Literal::new(
+            true,
+            Term::new_special_function(2, vec![x1]),
+            Term::new_truth(),
+        );
+        let cl2_l2 = Literal::new(
+            true,
+            Term::new_special_function(2, vec![x2]),
+            Term::new_truth(),
+        );
 
         let cl1 = Clause::new(vec![cl_l1.clone(), cl1_l2]);
         let cl2 = Clause::new(vec![cl_l1, cl2_l2]);

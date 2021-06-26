@@ -14,14 +14,14 @@
 // along with Serkr. If not, see <http://www.gnu.org/licenses/>.
 //
 
+use crate::prover::clause_selection::clause_weight::ClauseWeight;
+use crate::prover::clause_selection::heuristic::Heuristic;
+use crate::prover::clause_selection::pick_best::{choose_heuristic, pick_best_clause};
+use crate::prover::data_structures::clause::Clause;
+use crate::prover::data_structures::pd_tree::PDTree;
+use crate::prover::ordering::term_ordering::TermOrdering;
+use crate::utils::hash_map::HashMap;
 use std::collections::BinaryHeap;
-use prover::data_structures::clause::Clause;
-use prover::ordering::term_ordering::TermOrdering;
-use prover::clause_selection::clause_weight::ClauseWeight;
-use prover::clause_selection::heuristic::Heuristic;
-use prover::clause_selection::pick_best::{pick_best_clause, choose_heuristic};
-use prover::data_structures::pd_tree::PDTree;
-use utils::hash_map::HashMap;
 
 /// Contains the current proof state.
 pub struct ProofState {
@@ -33,7 +33,7 @@ pub struct ProofState {
     heuristic_use_count: Vec<usize>,
     current_heuristic_count: usize,
     term_index: PDTree,
-    id_count: u64
+    id_count: u64,
 }
 
 impl ProofState {
@@ -48,13 +48,13 @@ impl ProofState {
             heuristic_use_count: vec![4, 1],
             current_heuristic_count: 0,
             term_index: PDTree::new(),
-            id_count: 0
+            id_count: 0,
         };
-        
+
         for cl in preprocessed_clauses {
             state.add_to_unused(cl);
         }
-        
+
         state
     }
 
@@ -76,7 +76,8 @@ impl ProofState {
 
     /// Adds the given clause to used clauses.
     pub fn add_to_used(&mut self, cl: Clause) {
-        self.term_index.add_clause_to_index(&self.term_ordering, &cl);
+        self.term_index
+            .add_clause_to_index(&self.term_ordering, &cl);
         self.used_clauses.push(cl);
     }
 
@@ -96,12 +97,12 @@ impl ProofState {
     pub fn get_term_ordering(&self) -> &TermOrdering {
         &self.term_ordering
     }
-    
+
     /// Get a reference to the term index.
     pub fn get_term_index(&self) -> &PDTree {
         &self.term_index
     }
-    
+
     /// Get a reference to the used clauses.
     pub fn get_used(&self) -> &Vec<Clause> {
         &self.used_clauses

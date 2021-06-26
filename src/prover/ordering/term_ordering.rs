@@ -14,13 +14,13 @@
 // along with Serkr. If not, see <http://www.gnu.org/licenses/>.
 //
 
+use crate::prover::data_structures::literal::Literal;
+use crate::prover::data_structures::term::Term;
+use crate::prover::ordering::kbo::{kbo_ge, kbo_gt};
+use crate::prover::ordering::lpo::{lpo_ge, lpo_gt};
+use crate::prover::ordering::precedence::Precedence;
+use crate::prover::ordering::weight::Weight;
 use std::cmp::min;
-use prover::data_structures::term::Term;
-use prover::data_structures::literal::Literal;
-use prover::ordering::precedence::Precedence;
-use prover::ordering::weight::Weight;
-use prover::ordering::lpo::{lpo_gt, lpo_ge};
-use prover::ordering::kbo::{kbo_gt, kbo_ge};
 
 /// A generic term ordering. Currently we have the option of using either LPO or KBO.
 #[derive(Debug)]
@@ -68,16 +68,8 @@ impl TermOrdering {
             let mut dominating_term_found = false;
 
             for (j, _) in l1_l2_diff.iter().filter(|&x| *x != 0).enumerate() {
-                let l1_term = if j == 0 {
-                    l1.get_lhs()
-                } else {
-                    l1.get_rhs()
-                };
-                let l2_term = if i == 0 {
-                    l2.get_lhs()
-                } else {
-                    l2.get_rhs()
-                };
+                let l1_term = if j == 0 { l1.get_lhs() } else { l1.get_rhs() };
+                let l2_term = if i == 0 { l2.get_lhs() } else { l2.get_rhs() };
                 if self.gt(l1_term, l2_term) {
                     dominating_term_found = true;
                     break;
@@ -103,26 +95,14 @@ impl TermOrdering {
 /// We map s = t to { s, t } and s <> t to { s, s, t, t }
 // TODO: improve efficiency?
 fn multiset_difference(l: &Literal, r: &Literal) -> [usize; 2] {
-    let mut l_count = [if l.is_negative() {
-                           2
-                       } else {
-                           1
-                       },
-                       if l.is_negative() {
-                           2
-                       } else {
-                           1
-                       }];
-    let mut r_count = [if r.is_negative() {
-                           2
-                       } else {
-                           1
-                       },
-                       if r.is_negative() {
-                           2
-                       } else {
-                           1
-                       }];
+    let mut l_count = [
+        if l.is_negative() { 2 } else { 1 },
+        if l.is_negative() { 2 } else { 1 },
+    ];
+    let mut r_count = [
+        if r.is_negative() { 2 } else { 1 },
+        if r.is_negative() { 2 } else { 1 },
+    ];
 
     // Special handling of the case when lhs == rhs
     if l.get_lhs() == l.get_rhs() {

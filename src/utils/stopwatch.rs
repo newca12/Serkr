@@ -62,10 +62,10 @@ impl Stopwatch {
     /// Obviously the time will be in milliseconds.
     pub fn elapsed_ms(&self) -> u64 {
         let elapsed_duration = if self.running {
-                                   Instant::now()
-                               } else {
-                                   self.stop_time
-                               } - self.start_time;
+            Instant::now()
+        } else {
+            self.stop_time
+        } - self.start_time;
         elapsed_duration.as_secs() * 1000 + (elapsed_duration.subsec_nanos() / 1000000) as u64
     }
 }

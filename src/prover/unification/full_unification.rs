@@ -14,8 +14,8 @@
 // along with Serkr. If not, see <http://www.gnu.org/licenses/>.
 //
 
-use prover::data_structures::term::Term;
-use prover::unification::substitution::Substitution;
+use crate::prover::data_structures::term::Term;
+use crate::prover::unification::substitution::Substitution;
 use std::mem::swap;
 
 /// Tries to find the most general unifier of s and t.
@@ -40,8 +40,8 @@ pub fn mgu(s: &Term, t: &Term) -> Option<Substitution> {
             if s.is_function() {
                 // swap
                 swap(&mut s, &mut t);
-            } 
-            
+            }
+
             if t.occurs(&s) {
                 return None; // check
             } else {
@@ -68,7 +68,7 @@ pub fn mgu(s: &Term, t: &Term) -> Option<Substitution> {
             }
         }
     }
-    
+
     debug_assert!(unifier_ok(&sigma, s, t));
 
     Some(sigma)
@@ -86,8 +86,8 @@ fn unifier_ok(sigma: &Substitution, s: &Term, t: &Term) -> bool {
 #[cfg(test)]
 mod test {
     use super::mgu;
-    use prover::data_structures::term::Term;
-    
+    use crate::prover::data_structures::term::Term;
+
     #[test]
     fn mgu_1() {
         // c = c
@@ -95,7 +95,7 @@ mod test {
         let sigma = mgu(&c, &c).expect("MGU should exist");
         assert_eq!(sigma.size(), 0);
     }
-    
+
     #[test]
     fn mgu_2() {
         // c = d
@@ -103,15 +103,15 @@ mod test {
         let d = Term::new_constant(2);
         assert!(mgu(&c, &d).is_none());
     }
-    
+
     #[test]
     fn mgu_3() {
         // x = x
         let x = Term::new_variable(-1);
         let sigma = mgu(&x, &x).expect("MGU should exist");
         assert_eq!(sigma.size(), 0);
-    }  
-        
+    }
+
     #[test]
     fn mgu_4() {
         // x = c
@@ -129,7 +129,7 @@ mod test {
         let p = Term::new_special_function(1, Vec::new());
         assert!(mgu(&x, &p).is_none());
     }
-    
+
     #[test]
     fn mgu_5() {
         // x = y
@@ -138,7 +138,7 @@ mod test {
         let sigma = mgu(&x, &y).expect("MGU should exist");
         assert_eq!(sigma.size(), 1);
         assert_eq!(sigma.get(&x), Some(&y));
-    } 
+    }
 
     #[test]
     fn mgu_6() {
@@ -151,7 +151,7 @@ mod test {
         let sigma = mgu(&f_c_x, &f_c_d).expect("MGU should exist");
         assert_eq!(sigma.size(), 1);
         assert_eq!(sigma.get(&x), Some(&d));
-    }    
+    }
 
     #[test]
     fn mgu_7() {
@@ -160,7 +160,7 @@ mod test {
         let f_c = Term::new_function(2, vec![c.clone()]);
         let g_c = Term::new_function(3, vec![c.clone()]);
         assert!(mgu(&f_c, &g_c).is_none());
-    } 
+    }
 
     #[test]
     fn mgu_8() {
@@ -172,7 +172,7 @@ mod test {
         let sigma = mgu(&f_x, &f_y).expect("MGU should exist");
         assert_eq!(sigma.size(), 1);
         assert_eq!(sigma.get(&x), Some(&y));
-    }    
+    }
 
     #[test]
     fn mgu_9() {
@@ -182,7 +182,7 @@ mod test {
         let f_x = Term::new_function(2, vec![x.clone()]);
         let g_y = Term::new_function(3, vec![y.clone()]);
         assert!(mgu(&f_x, &g_y).is_none());
-    } 
+    }
 
     #[test]
     fn mgu_10() {
@@ -195,7 +195,7 @@ mod test {
         let sigma = mgu(&f_g_x, &f_y).expect("MGU should exist");
         assert_eq!(sigma.size(), 1);
         assert_eq!(sigma.get(&y), Some(&g_x));
-    } 
+    }
 
     #[test]
     fn mgu_11() {
@@ -212,14 +212,14 @@ mod test {
         assert_eq!(sigma.get(&x), Some(&c));
         assert_eq!(sigma.get(&y), Some(&g_c));
     }
- 
+
     #[test]
     fn mgu_12() {
         // f(x) = x
         let x = Term::new_variable(-1);
         let f_x = Term::new_function(1, vec![x.clone()]);
         assert!(mgu(&f_x, &x).is_none());
-    }    
+    }
 
     #[test]
     fn mgu_13() {
@@ -232,25 +232,25 @@ mod test {
         let t1 = Term::new_function(1, vec![x.clone(), g_y.clone()]);
         let t2 = Term::new_function(1, vec![x.clone(), z.clone()]);
         let sigma = mgu(&t1, &t2).expect("MGU should exist");
-        
+
         assert_eq!(sigma.size(), 1);
         assert_eq!(sigma.get(&z), Some(&g_y));
     }
-    
+
     #[test]
     fn mgu_13_sort() {
         // P(x, g(x)) = P(f(y), z)
         let x = Term::new_variable(-1);
         let y = Term::new_variable(-2);
         let z = Term::new_variable(-3);
-        let f_y = Term::new_function(1, vec!(y.clone()));
+        let f_y = Term::new_function(1, vec![y.clone()]);
         let g_x = Term::new_function(2, vec![x.clone()]);
         let g_f_y = Term::new_function(2, vec![f_y.clone()]);
 
         let t1 = Term::new_special_function(3, vec![x.clone(), g_x.clone()]);
         let t2 = Term::new_special_function(3, vec![f_y.clone(), z.clone()]);
         let sigma = mgu(&t1, &t2).expect("MGU should exist");
-        
+
         assert_eq!(sigma.size(), 2);
         assert_eq!(sigma.get(&x), Some(&f_y));
         assert_eq!(sigma.get(&z), Some(&g_f_y));

@@ -14,8 +14,8 @@
 // along with Serkr. If not, see <http://www.gnu.org/licenses/>.
 //
 
-use prover::data_structures::clause::Clause;
-use prover::unification::full_unification::mgu;
+use crate::prover::data_structures::clause::Clause;
+use crate::prover::unification::full_unification::mgu;
 
 /// Deletes all duplicated literals from a clause.
 pub fn delete_duplicates(cl: &mut Clause) {
@@ -66,10 +66,10 @@ pub fn destructive_equality_resolution(cl: &mut Clause) {
 
 #[cfg(test)]
 mod test {
-    use super::{delete_resolved, delete_duplicates};
-    use prover::data_structures::term::Term;
-    use prover::data_structures::literal::Literal;
-    use prover::data_structures::clause::Clause;
+    use super::{delete_duplicates, delete_resolved};
+    use crate::prover::data_structures::clause::Clause;
+    use crate::prover::data_structures::literal::Literal;
+    use crate::prover::data_structures::term::Term;
 
     #[test]
     fn delete_resolved_1() {

@@ -14,11 +14,11 @@
 // along with Serkr. If not, see <http://www.gnu.org/licenses/>.
 //
 
-use prover::data_structures::term::Term as ProverTerm;
-use prover::data_structures::literal::Literal;
-use prover::data_structures::clause::Clause;
-use cnf::ast::Term as CnfTerm;
-use cnf::ast::Formula;
+use crate::cnf::ast::Formula;
+use crate::cnf::ast::Term as CnfTerm;
+use crate::prover::data_structures::clause::Clause;
+use crate::prover::data_structures::literal::Literal;
+use crate::prover::data_structures::term::Term as ProverTerm;
 
 /// Turns a formula in CNF into a flat representation more suited for the prover.
 /// Also converts the formula into pure equational logic.
@@ -32,21 +32,19 @@ fn transform(f: Formula) -> Vec<Clause> {
         Formula::Predicate(s, args) => vec![Clause::new(vec![create_literal(false, s, args)])],
         Formula::Not(p) => {
             if let Formula::Predicate(ref s, ref args) = *p {
-                vec![Clause::new(vec![create_literal(true, s.clone(), args.clone())])]
+                vec![Clause::new(vec![create_literal(
+                    true,
+                    s.clone(),
+                    args.clone(),
+                )])]
             } else {
                 panic!("The CNF transformation failed due to some kind of a bug")
             }
         }
         Formula::Or(l) => {
-            vec![Clause::new(l.into_iter()
-                              .flat_map(transform_or)
-                              .collect())]
+            vec![Clause::new(l.into_iter().flat_map(transform_or).collect())]
         }
-        Formula::And(l) => {
-            l.into_iter()
-             .flat_map(transform)
-             .collect()
-        }
+        Formula::And(l) => l.into_iter().flat_map(transform).collect(),
         _ => panic!("The CNF transformation failed due to some kind of a bug"),
     }
 }
@@ -61,11 +59,7 @@ fn transform_or(f: Formula) -> Vec<Literal> {
                 panic!("The CNF transformation failed due to some kind of a bug")
             }
         }
-        Formula::Or(l) => {
-            l.into_iter()
-             .flat_map(transform_or)
-             .collect()
-        }
+        Formula::Or(l) => l.into_iter().flat_map(transform_or).collect(),
         _ => panic!("The CNF transformation failed due to some kind of a bug"),
     }
 }
@@ -73,13 +67,17 @@ fn transform_or(f: Formula) -> Vec<Literal> {
 fn create_literal(negated: bool, id: i64, args: Vec<CnfTerm>) -> Literal {
     if id == 0 {
         assert_eq!(args.len(), 2);
-        Literal::new(negated,
-                     create_term(args[0].clone(), false),
-                     create_term(args[1].clone(), false))
+        Literal::new(
+            negated,
+            create_term(args[0].clone(), false),
+            create_term(args[1].clone(), false),
+        )
     } else {
-        Literal::new(negated,
-                     create_term(CnfTerm::Function(id, args), true),
-                     ProverTerm::new_truth())
+        Literal::new(
+            negated,
+            create_term(CnfTerm::Function(id, args), true),
+            ProverTerm::new_truth(),
+        )
     }
 }
 

@@ -14,12 +14,12 @@
 // along with Serkr. If not, see <http://www.gnu.org/licenses/>.
 //
 
+use crate::prover::unification::substitution::Substitution;
+use crate::utils::hash_map::HashMap;
+use std::fmt::{Debug, Error, Formatter};
 use std::iter::IntoIterator;
-use std::slice::{Iter, IterMut};
 use std::ops::{Index, IndexMut};
-use std::fmt::{Debug, Formatter, Error};
-use prover::unification::substitution::Substitution;
-use utils::hash_map::HashMap;
+use std::slice::{Iter, IterMut};
 
 /// A single term.
 /// Functions are given a positive id, variables a negative one.
@@ -53,7 +53,7 @@ impl Term {
             args: args,
         }
     }
-    
+
     /// Creates a new constant. The ID passed in should be positive.
     #[allow(dead_code)]
     pub fn new_constant(id: i64) -> Term {
@@ -93,13 +93,13 @@ impl Term {
     pub fn is_function(&self) -> bool {
         self.id >= 0
     }
-    
+
     /// Checks if this term represents truth.
     #[allow(dead_code)]
     pub fn is_truth(&self) -> bool {
         self.id == 0
     }
-    
+
     /// Check if the term is a special function.
     pub fn is_special_function(&self) -> bool {
         self.sort_predicate
@@ -141,13 +141,15 @@ impl Term {
             }
         }
     }
-    
+
     /// Calculates the symbol count with given weights to function and variable symbols.
     pub fn symbol_count(&self, f_value: u64, v_value: u64) -> u64 {
         if self.is_variable() {
             v_value
         } else {
-            self.iter().fold(f_value, |acc, sub_t| acc + sub_t.symbol_count(f_value, v_value))
+            self.iter().fold(f_value, |acc, sub_t| {
+                acc + sub_t.symbol_count(f_value, v_value)
+            })
         }
     }
 
@@ -212,11 +214,11 @@ impl Debug for Term {
             if self.get_arity() == 0 {
                 write!(formatter, "c_{}", self.get_id())
             } else {
-                try!(write!(formatter, "f_{}(", self.get_id()));
+                write!(formatter, "f_{}(", self.get_id())?;
                 for (i, st) in self.iter().enumerate() {
-                    try!(write!(formatter, "{:?}", st));
+                    write!(formatter, "{:?}", st)?;
                     if i != self.get_arity() - 1 {
-                        try!(write!(formatter, ", "));
+                        write!(formatter, ", ")?;
                     }
                 }
                 write!(formatter, ")")

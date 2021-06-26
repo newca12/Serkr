@@ -17,12 +17,12 @@
 
 extern crate regex;
 
-use std::error::Error;
+
 use std::fs::File;
 use std::io::prelude::*;
 use std::path::Path;
-use tptp_parser::ast::*;
-use tptp_parser::parser_grammar::parse_TPTP_file;
+use crate::tptp_parser::ast::*;
+//use tptp_parser::parser_grammar::parse_TPTP_file;
 
 /// Checks if a character is a double quote. 
 /// We only have this function because doing this the obvious way breaks syntax highlighting.
@@ -99,21 +99,21 @@ fn read_file(s: &str) -> Result<String, String> {
     let mut file = match File::open(&path) {
         // The `description` method of `io::Error` returns a string that
         // describes the error
-        Err(why) => return Err(format!("couldn't open {}: {}", display, Error::description(&why))),
+        Err(why) => return Err(format!("couldn't open {}: {}", display, &why)),
         Ok(file) => file,
     };
 
     // Read the file contents into a string, returns `io::Result<usize>`
     let mut f = String::new();
     match file.read_to_string(&mut f) {
-        Err(why) => Err(format!("couldn't read {}: {}", display, Error::description(&why))),
+        Err(why) => Err(format!("couldn't read {}: {}", display, &why)),
         Ok(_) => Ok(f),
     }
 }
 
 /// Reads the file at the location given into a String, and preprocesses it into a more suitable form for the parser.
 fn read_and_preprocess_file(s: &str) -> Result<String, String> {
-    let s2 = try!(read_file(s));
+    let s2 = read_file(s)?;
     let s3 = remove_comments(&s2);
     Ok(remove_empty_lines(&s3))
 }
@@ -128,7 +128,7 @@ fn annotated_formula_names_match(af: &AnnotatedFormula, s: &str) -> bool {
 
 /// Handles an include directive. Includes work pretty much like in C, just paste the file to where the include was.
 fn handle_include(incl: Include) -> Result<Vec<AnnotatedFormula>, String> {
-    let include_file = try!(parse_tptp_file(&incl.0));
+    let include_file = parse_tptp_file(&incl.0)?;
     if let Some(formulae) = incl.1 {
         Ok(include_file.into_iter().filter(|input| formulae.iter().any(|s| annotated_formula_names_match(input, s))).collect())
     } else {
@@ -136,30 +136,73 @@ fn handle_include(incl: Include) -> Result<Vec<AnnotatedFormula>, String> {
     }
 }
 
+use crate::tptp_parser;
 /// Parses a file in TPTP format to a vector of annotated formulae.
 #[cfg_attr(feature="clippy", allow(use_debug))]
 pub fn parse_tptp_file(s: &str) -> Result<Vec<AnnotatedFormula>, String> {
-    let preprocessed_file = try!(read_and_preprocess_file(s));
-    let parsed_file = try!(parse_TPTP_file(&preprocessed_file).map_err(|x| format!("{:?}", x)));
+    let preprocessed_file = read_and_preprocess_file(s)?;
+    let file_parser = tptp_parser::parser_grammar::TPTP_fileParser::new();
+    let parsed_file = file_parser.parse(&preprocessed_file).map_err(|x| format!("{:?}", x))?;
     
     // Handle all includes.
     let mut formulas = Vec::<AnnotatedFormula>::new(); 
     for input in parsed_file {
         match input {
             TptpInput::AnnForm(f) => formulas.push(f),
-            TptpInput::Incl(i) => formulas.append(&mut try!(handle_include(i))),
+            TptpInput::Incl(i) => formulas.append(&mut handle_include(i)?),
         }
     }
     
     Ok(formulas)
 }
 
+fn parse_cnf_annotated(s: &str) -> Result<(String, String, Formula), String> {
+    let p = tptp_parser::parser_grammar::cnf_annotatedParser::new();
+    let r = p.parse(s).map_err(|x| format!("{:?}", x));
+    r
+}
+
+fn parse_single_quoted(s: &str) -> Result<String, String> {
+    let p = tptp_parser::parser_grammar::single_quotedParser::new();
+    let r = p.parse(s).map_err(|x| format!("{:?}", x));
+    r
+}
+
+fn parse_include(s: &str) -> Result<(String, Option<Vec<String>>), String> {
+    let p = tptp_parser::parser_grammar::includeParser::new();
+    let r = p.parse(s).map_err(|x| format!("{:?}", x));
+    r
+}
+
+fn parse_distinct_object(s: &str) -> Result<String, String> {
+    let p = tptp_parser::parser_grammar::distinct_objectParser::new();
+    let r = p.parse(s).map_err(|x| format!("{:?}", x));
+    r
+}
+
+fn parse_dollar_word(s: &str) -> Result<String, String> {
+    let p = tptp_parser::parser_grammar::dollar_wordParser::new();
+    let r = p.parse(s).map_err(|x| format!("{:?}", x));
+    r
+}
+
 #[cfg(test)]
 mod test {
-    use tptp_parser::parser_grammar::*;
-    use tptp_parser::ast::*;   
-    use super::parse_tptp_file;
     
+    use crate::tptp_parser::ast::*;   
+    use super::parse_tptp_file;
+    use super::parse_cnf_annotated;
+    use super::parse_single_quoted;
+    use super::parse_include;
+    use super::parse_distinct_object;
+    use super::parse_dollar_word;
+
+
+    #[test]
+    fn parser_test_0() {
+        assert!(parse_tptp_file("examples/SET060-6.p").is_ok());
+    }
+
     #[test]
     fn parser_test_1() {
         assert!(parse_tptp_file("test_problems/SYN000-1.p").is_ok());
@@ -175,6 +218,7 @@ mod test {
         // Try to read a file which does not exist.
         assert!(parse_tptp_file("test_problems/does_not_exists.p").is_err());
     }
+    
     
     #[test]
     fn parse_cnf_annotated_propositional() {
@@ -315,7 +359,7 @@ mod test {
         
         assert_eq!(res, ("reals".to_owned(), "axiom".to_owned(), fm));
     }
-    
+  
     #[test]
     fn parse_include_test() {
         assert_eq!(parse_include("include('Axioms/SYN000-0.ax').").unwrap(), ("Axioms/SYN000-0.ax".to_owned(), None));

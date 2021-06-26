@@ -14,7 +14,7 @@
 // along with Serkr. If not, see <http://www.gnu.org/licenses/>.
 //
 
-use prover::data_structures::term::Term;
+use crate::prover::data_structures::term::Term;
 
 /// Defines a weighting function on terms.
 /// Different enums represent different types of weightings.
@@ -42,8 +42,9 @@ fn simple_weight(only_unary_func: &Option<i64>, t: &Term) -> usize {
         1
     } else {
         let func_symbol_weight = function_symbol_weight(only_unary_func, t);
-        t.iter().fold(func_symbol_weight,
-                      |acc, s| acc + simple_weight(only_unary_func, s))
+        t.iter().fold(func_symbol_weight, |acc, s| {
+            acc + simple_weight(only_unary_func, s)
+        })
     }
 }
 

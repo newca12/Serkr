@@ -14,9 +14,9 @@
 // along with Serkr. If not, see <http://www.gnu.org/licenses/>.
 //
 
-use prover::data_structures::literal::Literal;
-use prover::data_structures::clause::Clause;
-use prover::ordering::term_ordering::TermOrdering;
+use crate::prover::data_structures::clause::Clause;
+use crate::prover::data_structures::literal::Literal;
+use crate::prover::ordering::term_ordering::TermOrdering;
 
 /// Checks if a given literal is maximal in a clause according to a given term ordering.
 pub fn literal_maximal_in(term_ordering: &TermOrdering, cl: &Clause, l: &Literal) -> bool {

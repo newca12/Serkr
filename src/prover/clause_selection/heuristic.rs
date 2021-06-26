@@ -14,8 +14,8 @@
 // along with Serkr. If not, see <http://www.gnu.org/licenses/>.
 //
 
-use prover::data_structures::clause::Clause;
-use prover::clause_selection::clause_weight::ClauseWeight;
+use crate::prover::clause_selection::clause_weight::ClauseWeight;
+use crate::prover::data_structures::clause::Clause;
 
 /// Different heuristics for ordering clauses.
 #[allow(dead_code)]
@@ -34,7 +34,7 @@ impl Heuristic {
     pub fn new_clauseweight(&self, cl: &Clause) -> ClauseWeight {
         match *self {
             Heuristic::Size(f_val, v_val) => ClauseWeight::new_size_weight(cl, f_val, v_val),
-            Heuristic::Age => ClauseWeight::new_age_weight(cl)
+            Heuristic::Age => ClauseWeight::new_age_weight(cl),
         }
     }
 }

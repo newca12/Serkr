@@ -14,8 +14,8 @@
 // along with Serkr. If not, see <http://www.gnu.org/licenses/>.
 //
 
-use prover::data_structures::term::Term;
-use prover::unification::substitution::Substitution;
+use crate::prover::data_structures::term::Term;
+use crate::prover::unification::substitution::Substitution;
 
 /// Tries to find a sigma so that s\sigma = t.
 /// Returns the substitution if it exists.
@@ -34,9 +34,10 @@ pub fn term_match_with_subst(sigma: Substitution, s: &Term, t: &Term) -> Option<
 /// A more general version of `term_match`.
 /// We can pass in a substitution to expand.
 /// We can also give more pairs of equations than just one.
-pub fn term_match_general(mut substitution: Substitution,
-                          mut eqs: Vec<(Term, Term)>)
-                          -> Option<Substitution> {
+pub fn term_match_general(
+    mut substitution: Substitution,
+    mut eqs: Vec<(Term, Term)>,
+) -> Option<Substitution> {
     while let Some((s, t)) = eqs.pop() {
         if s.is_function() && t.is_function() {
             if s.get_id() == t.get_id() {
@@ -50,7 +51,7 @@ pub fn term_match_general(mut substitution: Substitution,
             if t.is_special_function() {
                 return None;
             }
-            
+
             // Check if there is a previous bind.
             if let Some(v) = substitution.get(&s) {
                 // Check that it is not different.
@@ -72,7 +73,7 @@ pub fn term_match_general(mut substitution: Substitution,
 #[cfg(test)]
 mod test {
     use super::term_match;
-    use prover::data_structures::term::Term;
+    use crate::prover::data_structures::term::Term;
 
     #[test]
     fn term_match_1() {

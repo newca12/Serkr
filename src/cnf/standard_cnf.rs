@@ -14,11 +14,11 @@
 // along with Serkr. If not, see <http://www.gnu.org/licenses/>.
 //
 
-use cnf::ast::Formula;
-use cnf::renaming_info::RenamingInfo;
-use cnf::nnf::nnf;
-use cnf::standard_skolemization::skolemize;
-use cnf::distribute_ors_over_ands::distribute_ors_over_ands;
+use crate::cnf::ast::Formula;
+use crate::cnf::distribute_ors_over_ands::distribute_ors_over_ands;
+use crate::cnf::nnf::nnf;
+use crate::cnf::renaming_info::RenamingInfo;
+use crate::cnf::standard_skolemization::skolemize;
 
 /// Turns a formula into CNF.
 pub fn cnf(f: Formula, renaming_info: &mut RenamingInfo, renaming_limit: u64) -> Formula {

@@ -14,12 +14,12 @@
 // along with Serkr. If not, see <http://www.gnu.org/licenses/>.
 //
 
-use prover::data_structures::clause::Clause;
-use prover::data_structures::term::Term;
-use prover::ordering::term_ordering::TermOrdering;
-use prover::ordering::precedence::Precedence;
-use prover::ordering::weight::Weight;
-use utils::hash_map::HashMap;
+use crate::prover::data_structures::clause::Clause;
+use crate::prover::data_structures::term::Term;
+use crate::prover::ordering::precedence::Precedence;
+use crate::prover::ordering::term_ordering::TermOrdering;
+use crate::prover::ordering::weight::Weight;
+use crate::utils::hash_map::HashMap;
 
 fn single_unary_function_in_term(t: &Term, found_unary: &mut Option<i64>) -> bool {
     if t.is_function() {
@@ -33,8 +33,9 @@ fn single_unary_function_in_term(t: &Term, found_unary: &mut Option<i64>) -> boo
                 *found_unary = Some(t.get_id());
             }
         }
-        
-        t.iter().any(|sub_t| single_unary_function_in_term(sub_t, found_unary))
+
+        t.iter()
+            .any(|sub_t| single_unary_function_in_term(sub_t, found_unary))
     } else {
         false
     }
@@ -95,8 +96,10 @@ pub fn create_term_ordering(lpo_over_kbo: bool, clauses: &[Clause]) -> TermOrder
         TermOrdering::LPO(Precedence::default())
     } else {
         let counts = create_function_symbol_count(clauses);
-        TermOrdering::KBO(Precedence::ArityFrequency(counts),
-                          Weight::SimpleWeight,
-                          single_unary_function(clauses))
+        TermOrdering::KBO(
+            Precedence::ArityFrequency(counts),
+            Weight::SimpleWeight,
+            single_unary_function(clauses),
+        )
     }
 }

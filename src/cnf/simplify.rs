@@ -14,9 +14,9 @@
 // along with Serkr. If not, see <http://www.gnu.org/licenses/>.
 //
 
+use crate::cnf::ast::{Formula, Term};
+use crate::cnf::free_variables::free_in;
 use std::collections::HashSet;
-use cnf::ast::{Term, Formula};
-use cnf::free_variables::free_in;
 
 /// Simplifies a formula by performing some equivalence-preserving first-order simplifications.
 /// After this the formula is either True or False, or doesn't contain True and False.
@@ -65,10 +65,11 @@ fn negate(f: Formula) -> Formula {
 /// "p and false" can be simplified to "false".
 fn simplify_and(l: Vec<Formula>) -> Formula {
     // Duplicates are automatically removed thanks to us using a set.
-    let simplified_l = l.into_iter()
-                        .map(simplify)
-                        .filter(|x| *x != Formula::True)
-                        .collect::<HashSet<_>>();
+    let simplified_l = l
+        .into_iter()
+        .map(simplify)
+        .filter(|x| *x != Formula::True)
+        .collect::<HashSet<_>>();
 
     if simplified_l.contains(&Formula::False) {
         Formula::False
@@ -99,10 +100,11 @@ fn simplify_and(l: Vec<Formula>) -> Formula {
 /// "p or true" can be simplified to "true"
 /// "p or false" can be simplified to "p".
 fn simplify_or(l: Vec<Formula>) -> Formula {
-    let simplified_l = l.into_iter()
-                        .map(simplify)
-                        .filter(|x| *x != Formula::False)
-                        .collect::<HashSet<_>>();
+    let simplified_l = l
+        .into_iter()
+        .map(simplify)
+        .filter(|x| *x != Formula::False)
+        .collect::<HashSet<_>>();
 
     if simplified_l.contains(&Formula::True) {
         Formula::True
@@ -208,9 +210,11 @@ fn contains_true_or_false(f: &Formula) -> bool {
 
 #[cfg(test)]
 mod test {
-    use cnf::ast::{Term, Formula};
-    use super::{simplify_not, simplify_and, simplify_or, simplify_implies, simplify_equivalent,
-                simplify_quantifier};
+    use super::{
+        simplify_and, simplify_equivalent, simplify_implies, simplify_not, simplify_or,
+        simplify_quantifier,
+    };
+    use crate::cnf::ast::{Formula, Term};
 
     #[test]
     fn simplify_not_1() {
@@ -249,10 +253,14 @@ mod test {
     fn simplify_and_2() {
         let f1 = Formula::Predicate(1, vec![]);
         let f2 = Formula::Predicate(2, vec![]);
-        assert_eq!(simplify_and(vec![f1.clone(), f2.clone(), Formula::False]),
-                   Formula::False);
-        assert_eq!(simplify_and(vec![f1.clone(), Formula::False, f2.clone()]),
-                   Formula::False);
+        assert_eq!(
+            simplify_and(vec![f1.clone(), f2.clone(), Formula::False]),
+            Formula::False
+        );
+        assert_eq!(
+            simplify_and(vec![f1.clone(), Formula::False, f2.clone()]),
+            Formula::False
+        );
         assert_eq!(simplify_and(vec![Formula::False, f1, f2]), Formula::False);
     }
 
@@ -285,10 +293,14 @@ mod test {
     fn simplify_or_1() {
         let f1 = Formula::Predicate(1, vec![]);
         let f2 = Formula::Predicate(2, vec![]);
-        assert_eq!(simplify_or(vec![f1.clone(), f2.clone(), Formula::True]),
-                   Formula::True);
-        assert_eq!(simplify_or(vec![f1.clone(), Formula::True, f2.clone()]),
-                   Formula::True);
+        assert_eq!(
+            simplify_or(vec![f1.clone(), f2.clone(), Formula::True]),
+            Formula::True
+        );
+        assert_eq!(
+            simplify_or(vec![f1.clone(), Formula::True, f2.clone()]),
+            Formula::True
+        );
         assert_eq!(simplify_or(vec![Formula::True, f1, f2]), Formula::True);
     }
 

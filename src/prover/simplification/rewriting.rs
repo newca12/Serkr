@@ -14,14 +14,19 @@
 // along with Serkr. If not, see <http://www.gnu.org/licenses/>.
 //
 
-use prover::data_structures::term::Term;
-use prover::data_structures::clause::Clause;
-use prover::ordering::term_ordering::TermOrdering;
-use prover::data_structures::pd_tree::PDTree;
+use crate::prover::data_structures::clause::Clause;
+use crate::prover::data_structures::pd_tree::PDTree;
+use crate::prover::data_structures::term::Term;
+use crate::prover::ordering::term_ordering::TermOrdering;
 
 /// Rewrites a term into some normal form.
 /// Tries to rewrite the leftmost and innermost terms first.
-fn rewrite_to_normal_form(term_ordering: &TermOrdering, term_index: &PDTree, t: &mut Term, restrict: bool) {
+fn rewrite_to_normal_form(
+    term_ordering: &TermOrdering,
+    term_index: &PDTree,
+    t: &mut Term,
+    restrict: bool,
+) {
     if t.is_function() {
         for sub_t in t.iter_mut() {
             rewrite_to_normal_form(term_ordering, term_index, sub_t, false);
@@ -35,43 +40,48 @@ fn rewrite_to_normal_form(term_ordering: &TermOrdering, term_index: &PDTree, t: 
 }
 
 /// Helper for above. Gets around lifetime issues with the iterator.
-fn normal_form_step_helper(term_ordering: &TermOrdering, term_index: &PDTree, t: &Term, restrict: bool) -> Option<Term> {
+fn normal_form_step_helper(
+    term_ordering: &TermOrdering,
+    term_index: &PDTree,
+    t: &Term,
+    restrict: bool,
+) -> Option<Term> {
     for (_, r, sigma, oriented) in term_index.iter_generalizations(t, true) {
         if !restrict || !sigma.is_variable_renaming() {
             let mut new_r = r.clone();
-            new_r.subst(&sigma);            
+            new_r.subst(&sigma);
             if oriented || term_ordering.gt(t, &new_r) {
                 return Some(new_r);
             }
         }
     }
-   
+
     None
 }
 
 /// Returns a bit vector with the maximal literals marked.
 fn maximal_literals(term_ordering: &TermOrdering, cl: &Clause) -> Vec<bool> {
     let mut bv = vec![true; cl.size()];
-    
+
     for i in 0..cl.size() {
         if !bv[i] {
             continue;
         }
-        
+
         for j in 0..cl.size() {
             if i != j && bv[j] && term_ordering.gt_lit(&cl[i], &cl[j]) {
                 bv[j] = false;
             }
         }
     }
-    
+
     bv
 }
 
 /// Rewrites a given clause into normal form with regards to the active clause set.
 pub fn rewrite_clause(term_ordering: &TermOrdering, term_index: &PDTree, cl: &mut Clause) {
     let bv = maximal_literals(term_ordering, cl);
-    
+
     for i in 0..cl.size() {
         let l = &mut cl[i];
         let restricted = l.is_positive() && bv[i];
@@ -83,7 +93,7 @@ pub fn rewrite_clause(term_ordering: &TermOrdering, term_index: &PDTree, cl: &mu
         } else {
             rewrite_to_normal_form(term_ordering, term_index, l.get_lhs_mut(), false);
             rewrite_to_normal_form(term_ordering, term_index, l.get_rhs_mut(), false);
-        } 
+        }
     }
 }
 

@@ -17,25 +17,30 @@
 /// Same as try! except for options.
 #[macro_export]
 macro_rules! get {
-    ($e:expr) => (match $e {
-                      Some(e) => e,
-                      None => return None
-                  })
+    ($e:expr) => {
+        match $e {
+            Some(e) => e,
+            None => return None,
+        }
+    };
 }
 
 /// Same as `assert_eq!` except for inequality.
 #[macro_export]
 macro_rules! assert_neq {
-    ($left:expr , $right:expr) => ({
+    ($left:expr , $right:expr) => {{
         match (&($left), &($right)) {
             (left_val, right_val) => {
                 if *left_val == *right_val {
-                    panic!("assertion failed: `(left != right)` \
-                           (left: `{:?}`, right: `{:?}`)", left_val, right_val)
+                    panic!(
+                        "assertion failed: `(left != right)` \
+                           (left: `{:?}`, right: `{:?}`)",
+                        left_val, right_val
+                    )
                 }
             }
         }
-    })
+    }};
 }
 
 /// A println which appends "% " to the start of everything to print.

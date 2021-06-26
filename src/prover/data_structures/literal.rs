@@ -14,13 +14,13 @@
 // along with Serkr. If not, see <http://www.gnu.org/licenses/>.
 //
 
-use std::fmt::{Debug, Formatter, Error};
+use crate::prover::data_structures::term::Term;
+use crate::prover::unification::substitution::Substitution;
+use std::fmt::{Debug, Error, Formatter};
 use std::iter::Iterator;
-use prover::data_structures::term::Term;
-use prover::unification::substitution::Substitution;
 
 /// A single (possibly negated) equation, or simply, a literal.
-/// Note that this has custom `PartialEq` and `Eq`. 
+/// Note that this has custom `PartialEq` and `Eq`.
 /// If we add stuff to here remember to change them too.
 #[derive(Clone)]
 pub struct Literal {
@@ -74,11 +74,11 @@ impl Literal {
         self.lhs.subst(substitution);
         self.rhs.subst(substitution);
     }
-    
+
     /// Calculates the symbol count with given weights to function and variable symbols.
     pub fn symbol_count(&self, f_value: u64, v_value: u64) -> u64 {
-        self.get_lhs().symbol_count(f_value, v_value) + 
-        self.get_rhs().symbol_count(f_value, v_value)
+        self.get_lhs().symbol_count(f_value, v_value)
+            + self.get_rhs().symbol_count(f_value, v_value)
     }
 
     /// Checks if the given literal has the same polarity as this one.
@@ -130,11 +130,7 @@ impl Eq for Literal {}
 
 impl Debug for Literal {
     fn fmt(&self, formatter: &mut Formatter) -> Result<(), Error> {
-        let eqn_sign = if self.is_positive() {
-            "="
-        } else {
-            "<>"
-        };
+        let eqn_sign = if self.is_positive() { "=" } else { "<>" };
         write!(formatter, "{:?} {} {:?}", self.lhs, eqn_sign, self.rhs)
     }
 }

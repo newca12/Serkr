@@ -2,29 +2,18 @@
 name = "serkr"
 version = "0.1.0"
 authors = ["Mikko Aarnos <mikko.aarnos@gmail.com>"]
+edition = "2018"
 
 exclude = ["examples/*", "test_problems/*"]
+build = "build.rs"
 
-build = "build.rs" 
+[build-dependencies]
+lalrpop = "0.19.6"
 
-[build-dependencies.lalrpop]
-version = "*"
-
-[dependencies.lalrpop-util]
-version = "*"
-
-[dependencies.regex]
-version = "*"
-
-[dependencies.clap]
-version = "*"
-
-[dependencies.num]
-version = "*"
-
-[dependencies.fnv]
-version = "*"
-
-[dependencies.clippy]
-version = "*"
-optional = true
+[dependencies]
+lalrpop-util = "0.19.6"
+regex = "1.5.4"
+clap = "2.33.3"
+num = "0.4.0"
+fnv = "1.0.7"
+clippy = { version = "0.0.302", optional = true } 
